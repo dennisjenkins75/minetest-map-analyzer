@@ -18,7 +18,14 @@ friend class MapBlock;
     uint8_t private_;
   };
 
-  Node();
+  Node():
+    param_0(0),
+    param_1(0),
+    param_2(0),
+    metadata_(),
+    inventory_()
+  {}
+
 
   uint16_t param0() const { return param_0; }
   uint8_t param1() const { return param_1; }

@@ -1,4 +1,5 @@
-CXXFLAGS+=	--std=c++17 -Wall -O2 -ggdb
+#CXXFLAGS+=	--std=c++17 -Wall -O2 -ggdb -pg
+CXXFLAGS+=	--std=c++17 -Wall -O3 -ggdb
 LDFLAGS+=	$(shell pkg-config sqlite3 --libs)
 LDFLAGS+=	$(shell pkg-config zlib --libs)
 

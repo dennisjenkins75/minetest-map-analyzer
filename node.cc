@@ -6,15 +6,6 @@
 #include "node.h"
 #include "utils.h"
 
-Node::Node():
-  param_0(0),
-  param_1(0),
-  param_2(0),
-  metadata_(),
-  inventory_()
-{}
-
-
 bool Node::deserialize_metadata(BlobReader &blob, uint8_t version, const Pos &pos) {
   if (DEBUG) {
     std::cout << CYAN << "deserialize_metadata (node) " <<
