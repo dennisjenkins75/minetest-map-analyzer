@@ -5,7 +5,6 @@
 #ifndef _MT_MAP_SEARCH_MAPBLOCK_H_
 #define _MT_MAP_SEARCH_MAPBLOCK_H_
 
-#include <map>
 #include <vector>
 #include <string>
 
@@ -50,8 +49,8 @@ class MapBlock {
   // Index = p.Z*MAP_BLOCKSIZE*MAP_BLOCKSIZE + p.Y*MAP_BLOCKSIZE + p.X
   std::vector<Node> nodes_;
 
-  // Map of IDs (param0) to names.
-  std::map<uint16_t, std::string> name_id_mapping_;
+  // Maps IDs (param0) to names.
+  std::vector<std::string> name_id_mapping_;
 
   bool deserialize_nodes(BlobReader &blob);
 

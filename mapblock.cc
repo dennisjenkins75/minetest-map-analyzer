@@ -21,9 +21,8 @@ MapBlock::MapBlock() :
 const std::string& MapBlock::name_for_id(uint16_t id) const {
   static const std::string _unknown ("unknown");
 
-  auto i = name_id_mapping_.find(id);
-  if (i == name_id_mapping_.end()) { return _unknown; }
-  return i->second;
+  if (id > name_id_mapping_.size()) { return _unknown; }
+  return name_id_mapping_[id];
 }
 
 bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id) {
@@ -157,6 +156,8 @@ bool MapBlock::deserialize_name_id_mapping(BlobReader &blob) {
   uint16_t nim_count = 0;
   if (!blob.read_u16(&nim_count, "nim.count")) { return false; }
 
+  name_id_mapping_.resize(nim_count, "");
+
   for (;nim_count > 0; --nim_count) {
     uint16_t id = 0;
     if (!blob.read_u16(&id, "nim.id")) { return false; }
@@ -167,6 +168,10 @@ bool MapBlock::deserialize_name_id_mapping(BlobReader &blob) {
 
     std::string name;
     if (!blob.read_str(&name, name_len, "nim.name")) { return false; }
+
+    if (id > name_id_mapping_.size()) {
+      name_id_mapping_.resize(id, "");
+    }
 
     name_id_mapping_[id] = name;
   }
