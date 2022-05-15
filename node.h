@@ -33,6 +33,7 @@ friend class MapBlock;
 
   const std::vector<MetaDataVar>& metadata() const { return metadata_; }
   const Inventory& inventory() const { return inventory_; }
+  std::string get_meta(const std::string &key) const;
 
  private:
   uint16_t param_0;
