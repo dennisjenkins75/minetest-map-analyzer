@@ -11,10 +11,12 @@
 #include <arpa/inet.h>
 
 #include <cassert>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <istream>
 #include <limits>
+#include <ostream>
 #include <sstream>
 #include <streambuf>
 #include <string>
@@ -50,20 +52,25 @@ struct Stats {
 };
 
 void dump_stats(const Stats &stats) {
-  std::cout << "bad_map_blocks: " << stats.bad_map_blocks << "\n";
-  std::cout << "total_map_blocks: " << stats.total_map_blocks << "\n";
-  std::cout << "bad %: " << 100.0 * static_cast<double>(stats.bad_map_blocks) /
+  std::ofstream ofs("stats.out");
+
+  ofs << "bad_map_blocks: " << stats.bad_map_blocks << "\n";
+  ofs << "total_map_blocks: " << stats.total_map_blocks << "\n";
+  ofs << "bad %: " << 100.0 * static_cast<double>(stats.bad_map_blocks) /
     static_cast<double>(stats.total_map_blocks) << "\n";
 
   for (int i = 0; i < 256; i++) {
     if (stats.by_version[i]) {
-      std::cout << "version: " << i << " = " << stats.by_version[i] << "\n";
+      ofs << "version: " << i << " = " << stats.by_version[i] << "\n";
     }
   }
+  ofs.close();
 
+  ofs.open("nodes-by-type.out");
   for (const auto &n: stats.by_type) {
-    std::cout << std::setw(12) << n.second << " " << n.first << "\n";
+    ofs << std::setw(12) << n.second << " " << n.first << "\n";
   }
+  ofs.close();
 }
 
 
@@ -157,7 +164,7 @@ void process_file(const char *filename, int64_t min_pos, int64_t max_pos) {
   handle_sqlite3_error(db, rc);
   db = nullptr;
 
-//  dump_stats(stats);
+  dump_stats(stats);
 }
 
 int main(int argc, char *argv[]) {
