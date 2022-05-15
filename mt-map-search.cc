@@ -81,8 +81,21 @@ void find_currency_hoard(int64_t pos, const MapBlock &mb) {
     uint64_t minegeld = total_minegeld_in_inventory(node.inventory());
     if (minegeld > 0) {
       const std::string& name = mb.name_for_id(node.param0());
-      std::cout << std::setw(12) << minegeld << " " << Pos(pos, i).str()
+      std::cout << "minegeld: " << std::setw(12) << minegeld << " "
+                << Pos(pos, i).str()
                 << " " << pos << " " << name << "\n";
+    }
+  }
+}
+
+void find_bones(int64_t pos, const MapBlock &mb) {
+  for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
+    const Node &node = mb.nodes()[i];
+
+    const std::string& name = mb.name_for_id(node.param0());
+    if (name == "bones:bones") {
+      const std::string owner = node.get_meta("_owner");
+      std::cout << "bones: " << Pos(pos, i).str() << " " << owner << "\n";
     }
   }
 }
@@ -106,6 +119,7 @@ void process_block(int64_t pos, BlobReader &blob, Stats *stats) {
   }
 
   find_currency_hoard(pos, mb);
+  find_bones(pos, mb);
 }
 
 

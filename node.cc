@@ -55,3 +55,17 @@ bool Node::deserialize_metadata(BlobReader &blob, uint8_t version, const Pos &po
 
   return true;
 }
+
+std::string Node::get_meta(const std::string &key) const {
+  // This is a linear search, but we rarely need to search meta,
+  // its usually small, and making is an unordered_map slows down the
+  // program.
+
+  for (const auto &meta: metadata_) {
+    if (meta.key == key) {
+      return meta.value;
+    }
+  }
+
+  return "";
+}
