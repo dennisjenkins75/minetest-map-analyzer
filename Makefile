@@ -13,7 +13,7 @@ run:	mt-map-search
 	./mt-map-search
 
 SRCS:=	$(sort $(basename blob_reader.cc inventory.cc mapblock.cc \
-		mt-map-search.cc node.ccv pos.cc utils.cc))
+		mt-map-search.cc node.cc pos.cc utils.cc))
 
 OBJS:=	$(SRCS:=.o)
 
