@@ -1,3 +1,7 @@
+function set_cpp_dialect()
+    cppdialect "C++2a"
+end
+
 function include_gtest()
     includedirs {
         "vendor/googletest/googletest/include",
@@ -12,7 +16,7 @@ function include_spdlog()
         "vendor/spdlog/include",
     }
 
-    links { "spdlog" }
+    links { "lib_spdlog" }
 end
 
 function include_sqlite()
@@ -26,7 +30,7 @@ end
 function cpp_library()
     kind "StaticLib"
     language "C++"
-    cppdialect "C++20"
+    set_cpp_dialect()
     systemversion "latest"
 
     includedirs {
@@ -100,6 +104,9 @@ project "lib_sqlite"
     files {
         "vendor/sqlite/sqlite3.c",
     }
+    buildoptions {
+        "-DSQLITE_OMIT_LOAD_EXTENSION",
+    }
 
 project "map_reader_lib"
     hide_project_makefile()
@@ -118,13 +125,13 @@ project "unit_tests"
     hide_project_makefile()
     kind "ConsoleApp"
     language "C++"
+    set_cpp_dialect()
     includedirs {
         ".",
     }
     files {
        "src/**_test.cc",
     }
-    cppdialect "C++20"
     systemversion "latest"
     links { "map_reader_lib" }
     include_gtest()
@@ -142,6 +149,7 @@ project "map_analyzer"
     hide_project_makefile()
     kind "ConsoleApp"
     language "C++"
+    set_cpp_dialect()
     includedirs {
         ".",
     }
