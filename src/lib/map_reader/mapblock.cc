@@ -168,7 +168,7 @@ bool MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
       return false;
     }
 
-    const Pos pos(pos_id, local_pos);
+    const NodePos pos(pos_id, local_pos);
 
     assert(local_pos < NODES_PER_BLOCK);
     nodes_.at(local_pos).deserialize_metadata(r, version, pos);

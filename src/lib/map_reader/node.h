@@ -41,7 +41,8 @@ private:
   // Extracts metadata from input stream for THIS NODE ONLY.
   // Called immediately after MapBlock::deserialize_metadata() extracts the
   // per-node `pos`.
-  bool deserialize_metadata(BlobReader &blob, uint8_t version, const Pos &pos);
+  bool deserialize_metadata(BlobReader &blob, uint8_t version,
+                            const NodePos &pos);
 };
 
 #endif // _MT_MAP_SEARCH_NODE_H_

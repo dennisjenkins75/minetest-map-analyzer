@@ -5,6 +5,7 @@
 // https://github.com/minetest/minetest/blob/master/doc/world_format.txt
 
 #include <arpa/inet.h>
+#include <getopt.h>
 #include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#include "src/app/database.h"
+#include "src/app/producer.h"
 #include "src/lib/map_reader/blob_reader.h"
 #include "src/lib/map_reader/mapblock.h"
 #include "src/lib/map_reader/node.h"
@@ -77,7 +80,7 @@ void find_currency_hoard(int64_t pos, const MapBlock &mb) {
     if (minegeld > 0) {
       const std::string &name = mb.name_for_id(node.param0());
       std::cout << "minegeld: " << std::setw(12) << minegeld << " "
-                << Pos(pos, i).str() << " " << pos << " " << name << "\n";
+                << NodePos(pos, i).str() << " " << pos << " " << name << "\n";
     }
   }
 }
@@ -89,7 +92,7 @@ void find_bones(int64_t pos, const MapBlock &mb) {
     const std::string &name = mb.name_for_id(node.param0());
     if (name == "bones:bones") {
       const std::string owner = node.get_meta("_owner");
-      std::cout << "bones: " << Pos(pos, i).str() << " " << owner << "\n";
+      std::cout << "bones: " << NodePos(pos, i).str() << " " << owner << "\n";
     }
   }
 }
@@ -116,83 +119,123 @@ void process_block(int64_t pos, BlobReader &blob, Stats *stats) {
   find_bones(pos, mb);
 }
 
-void handle_sqlite3_error(sqlite3 *db, int rc) {
-  if (rc != SQLITE_OK) {
-    std::cout << "Fatal Sqlite error: " << rc << ", " << sqlite3_errstr(rc)
-              << "\n";
-    exit(-1);
-  }
-}
-
-void process_file(const char *filename, int64_t min_pos, int64_t max_pos) {
-  const char sql[] = "select pos, data from blocks "
-                     "where pos between :min_pos and :max_pos "
-                     "order by pos";
+void process_file(const char *filename, const MapBlockPos &min_pos,
+                  const MapBlockPos &max_pos) {
+  MapBlockQueue mbq;
 
   sqlite3 *db = nullptr;
   int rc = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READONLY, nullptr);
   handle_sqlite3_error(db, rc);
 
-  sqlite3_stmt *stmt = nullptr;
-  rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
-  handle_sqlite3_error(db, rc);
+  Producer(&mbq, db, min_pos, max_pos);
+  std::cout << "MapBlocks: " << mbq.size() << "\n";
 
-  rc = sqlite3_bind_int64(stmt, 1, min_pos);
-  handle_sqlite3_error(db, rc);
+  /*
+    Stats stats;
+    while (true) {
+      const int64_t pos = sqlite3_column_int64(stmt, 0);
+      const uint8_t *data =
+          static_cast<const uint8_t *>(sqlite3_column_blob(stmt, 1));
+      const size_t data_len = sqlite3_column_bytes(stmt, 1);
 
-  rc = sqlite3_bind_int64(stmt, 2, max_pos);
-  handle_sqlite3_error(db, rc);
+      // Sadly, we must make a copy... :(
+      const std::vector<uint8_t> raw_data(data, data + data_len);
+      BlobReader blob(raw_data);
 
-  int64_t blocks = 0;
-  Stats stats;
-  while (true) {
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_DONE) {
-      break;
+      process_block(pos, blob, &stats);
     }
-    blocks++;
-
-    const int64_t pos = sqlite3_column_int64(stmt, 0);
-    const uint8_t *data =
-        static_cast<const uint8_t *>(sqlite3_column_blob(stmt, 1));
-    const size_t data_len = sqlite3_column_bytes(stmt, 1);
-
-    // Sadly, we must make a copy... :(
-    const std::vector<uint8_t> raw_data(data, data + data_len);
-    BlobReader blob(raw_data);
-
-    process_block(pos, blob, &stats);
-  }
-
-  rc = sqlite3_finalize(stmt);
-  handle_sqlite3_error(db, rc);
+  */
 
   rc = sqlite3_close_v2(db);
   handle_sqlite3_error(db, rc);
   db = nullptr;
 
-  dump_stats(stats);
+  //  dump_stats(stats);
+}
+
+static const int OPT_MIN = 257;
+static const int OPT_MAX = 258;
+static const int OPT_POS = 259;
+
+static struct option long_options[] = {
+    {"min", required_argument, NULL, OPT_MIN},
+    {"max", required_argument, NULL, OPT_MAX},
+    {"pos", required_argument, NULL, OPT_POS},
+    {NULL, 0, NULL, 0}};
+
+void Usage(const char *prog) {
+  std::cerr << "Usage: " << prog << " [options] filename\n";
+  std::cerr << "Options: \n";
+  std::cerr << "  --min   x,y,z - Min mapblock to examine.\n";
+  std::cerr << "  --max   x,y,z - Max mapblock to examine.\n";
+  std::cerr << "  --pos   x,y,z - Only mapblock to examine.\n";
 }
 
 int main(int argc, char *argv[]) {
-  const char *filename = "/dev/null";
-  int64_t min_pos = std::numeric_limits<int64_t>::min();
-  int64_t max_pos = std::numeric_limits<int64_t>::max();
+  const char *filename = NULL;
+  MapBlockPos min_pos = MapBlockPos::min();
+  MapBlockPos max_pos = MapBlockPos::max();
 
-  for (int i = 1; i < argc; i++) {
-    if (!strcmp(argv[i], "-min")) {
-      min_pos = strtoll(argv[++i], NULL, 10);
-    } else if (!strcmp(argv[i], "-max")) {
-      max_pos = strtoll(argv[++i], NULL, 10);
-    } else if (!strcmp(argv[i], "-pos")) {
-      // mapblock pos, not node pos.
-      int x = strtol(argv[++i], nullptr, 10);
-      int y = strtol(argv[++i], nullptr, 10);
-      int z = strtol(argv[++i], nullptr, 10);
-      min_pos = max_pos = Pos(x, y, z).mapblock_id_from_node_pos();
-    } else {
-      filename = argv[i];
+  while (true) {
+    int option_index = 0;
+    int c = getopt_long(argc, argv, "", long_options, &option_index);
+
+    if (c < 0) {
+      break;
     }
+
+    switch (c) {
+      case 0:
+        std::cout << "option " << long_options[option_index].name;
+        if (optarg) {
+          std::cout << " with arg " << optarg;
+        }
+        std::cout << "\n";
+        break;
+
+      case OPT_MIN:
+        if (!min_pos.parse(optarg)) {
+          std::cerr << "ERROR: Invalid MapBlockPos value: " << optarg << "\n";
+          exit(EXIT_FAILURE);
+        }
+        break;
+
+      case OPT_MAX:
+        if (!max_pos.parse(optarg)) {
+          std::cerr << "ERROR: Invalid MapBlockPos value: " << optarg << "\n";
+          exit(EXIT_FAILURE);
+        }
+        break;
+
+      case OPT_POS:
+        if (!min_pos.parse(optarg)) {
+          std::cerr << "ERROR: Invalid MapBlockPos value: " << optarg << "\n";
+          exit(EXIT_FAILURE);
+        }
+        max_pos = min_pos;
+        break;
+
+      default:
+        std::cerr << "Unrecognized getopt_long() result of " << c << "\n";
+        break;
+    }
+  }
+
+  if (optind < argc) {
+    // Process non-option ARGV elements (filenames)
+    filename = argv[optind++];
+  }
+
+  min_pos.sort(&max_pos);
+
+  std::cout << "min_pos: " << min_pos.str() << " " << min_pos.MapBlockId()
+            << "\n";
+  std::cout << "max_pos: " << max_pos.str() << " " << max_pos.MapBlockId()
+            << "\n";
+  if (!filename) {
+    std::cerr << "Error: Must specify path of the map.sqlite file.\n";
+    Usage(argv[0]);
+    exit(EXIT_FAILURE);
   }
 
   process_file(filename, min_pos, max_pos);

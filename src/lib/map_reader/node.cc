@@ -7,7 +7,7 @@
 #include "src/lib/map_reader/utils.h"
 
 bool Node::deserialize_metadata(BlobReader &blob, uint8_t version,
-                                const Pos &pos) {
+                                const NodePos &pos) {
   if (DEBUG) {
     std::cout << CYAN << "deserialize_metadata (node) " << pos.str() << "\n";
   }

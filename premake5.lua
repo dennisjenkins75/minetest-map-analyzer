@@ -154,10 +154,10 @@ project "map_analyzer"
         ".",
     }
     files {
-        "src/main.cc"
+        "src/app/**.cc"
     }
     removefiles {
-        "src/**_test.cc",
+        "src/app/**_test.cc",
     }
     include_spdlog()
     include_sqlite()

@@ -27,9 +27,19 @@ static inline int64_t block_as_int(int16_t bx, int16_t by, int16_t bz) {
   return (uint64_t)bz * 0x1000000 + (uint64_t)by * 0x1000 + bx;
 }
 
-Pos::Pos(int16_t x, int16_t y, int16_t z) : x(x), y(y), z(z) {}
+int64_t MapBlockPos::MapBlockId() const { return block_as_int(x, y, z); }
 
-Pos::Pos(int64_t mapblock_id, uint16_t node_id) : x(0), y(0), z(0) {
+MapBlockPos::MapBlockPos(int64_t mapblock_id) : Pos() {
+  x = unsigned_to_signed(pythonmodulo(mapblock_id, 4096), 2048);
+  mapblock_id = (mapblock_id - x) / 4096;
+
+  y = unsigned_to_signed(pythonmodulo(mapblock_id, 4096), 2048);
+  mapblock_id = (mapblock_id - y) / 4096;
+
+  z = unsigned_to_signed(pythonmodulo(mapblock_id, 4096), 2048);
+}
+
+NodePos::NodePos(int64_t mapblock_id, uint16_t node_id) : Pos() {
   x = unsigned_to_signed(pythonmodulo(mapblock_id, 4096), 2048);
   mapblock_id = (mapblock_id - x) / 4096;
 
@@ -43,10 +53,6 @@ Pos::Pos(int64_t mapblock_id, uint16_t node_id) : x(0), y(0), z(0) {
   z = (z << 4) | ((node_id >> 8) & 15);
 }
 
-int64_t Pos::mapblock_id_from_node_pos() const { return block_as_int(x, y, z); }
-
-std::string Pos::str() const {
-  char tmp[64];
-  snprintf(tmp, sizeof(tmp), "(%d,%d,%d)", x, y, z);
-  return std::string(tmp);
+int64_t NodePos::MapBlockId() const {
+  return MapBlockPos(x >> 4, y >> 4, z >> 4).MapBlockId();
 }
