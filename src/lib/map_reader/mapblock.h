@@ -34,7 +34,7 @@ public:
   const std::string &name_for_id(uint16_t id) const;
 
 private:
-  // Overall, was the deserialiation 100% successfull?
+  // Overall, was the deserialiation 100% successful?
   bool valid_;
 
   // Exact fields (see world_format.txt spec);

@@ -8,6 +8,15 @@
 struct MapBlockKey {
   int64_t pos;
   int64_t mtime;
+
+  static MapBlockKey MakeTombstone() {
+    return MapBlockKey{std::numeric_limits<int64_t>::max(),
+                       std::numeric_limits<int64_t>::max()};
+  }
+
+  bool operator==(const MapBlockKey &a) const {
+    return (a.pos == pos) && (a.mtime == mtime);
+  }
 };
 
 static inline bool operator<(const MapBlockKey &a, const MapBlockKey &b) {
@@ -27,6 +36,15 @@ public:
     std::unique_lock<std::mutex> lock(mutex_);
     queue_.push(std::move(item));
     cv_.notify_one();
+  }
+
+  // Enqueues a special MapBlockKey that will always sort LAST and represents
+  // a "tombstone", so that consumer threads know to stop waiting for items
+  // and to exit.
+  void SetTombstone() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    queue_.push(MapBlockKey::MakeTombstone());
+    cv_.notify_all();
   }
 
   size_t size() const {

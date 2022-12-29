@@ -16,15 +16,20 @@ function include_spdlog()
         "vendor/spdlog/include",
     }
 
-    links { "lib_spdlog" }
+    -- TODO: Use the header-only libfmt?
+    -- https://github.com/fmtlib/fmt/issues/2157
+    links { "lib_spdlog", "fmt" }
 end
 
+-- TODO: Fix problem with linking our vendor/sqlite...
+-- Using system sqlite3 for now.
 function include_sqlite()
     includedirs {
-        "vendor/sqlite",
+--        "vendor/sqlite",
     }
 
-    links { "lib_sqlite" }
+--    links { "lib_sqlite" }
+    links { "sqlite3" }
 end
 
 function cpp_library()
@@ -120,6 +125,19 @@ project "map_reader_lib"
     filter {"action:gmake or action:gmake2"}
         enablewarnings{"all"}
 
+project "database_lib"
+    hide_project_makefile()
+    cpp_library()
+    files {
+        "src/lib/database/**.cc",
+    }
+    removefiles {
+        "src/lib/database/**_test.cc",
+    }
+    filter {"action:gmake or action:gmake2"}
+        enablewarnings{"all"}
+
+
 
 project "unit_tests"
     hide_project_makefile()
@@ -133,7 +151,7 @@ project "unit_tests"
        "src/**_test.cc",
     }
     systemversion "latest"
-    links { "map_reader_lib" }
+    links { "database_lib", "map_reader_lib", "absl_strings" }
     include_gtest()
     include_spdlog()
     include_sqlite()
@@ -161,7 +179,8 @@ project "map_analyzer"
     }
     include_spdlog()
     include_sqlite()
-    links { "map_reader_lib" }
+    systemversion "latest"
+    links { "database_lib", "map_reader_lib", "absl_strings" }
 
     filter { "system:linux" }
         links { "pthread", "z" }

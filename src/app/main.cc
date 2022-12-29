@@ -6,6 +6,7 @@
 
 #include <arpa/inet.h>
 #include <getopt.h>
+#include <inttypes.h>
 #include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,8 +25,9 @@
 #include <string>
 #include <vector>
 
-#include "src/app/database.h"
+#include "src/app/config.h"
 #include "src/app/producer.h"
+#include "src/lib/database/db-map-interface.h"
 #include "src/lib/map_reader/blob_reader.h"
 #include "src/lib/map_reader/mapblock.h"
 #include "src/lib/map_reader/node.h"
@@ -119,16 +121,19 @@ void process_block(int64_t pos, BlobReader &blob, Stats *stats) {
   find_bones(pos, mb);
 }
 
-void process_file(const char *filename, const MapBlockPos &min_pos,
-                  const MapBlockPos &max_pos) {
-  MapBlockQueue mbq;
+void process_file(const Config &config) {
+  MapBlockQueue queue;
+  std::unique_ptr<MapInterface> map =
+      MapInterface::Create("sqlite3", config.map_filename);
 
-  sqlite3 *db = nullptr;
-  int rc = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READONLY, nullptr);
-  handle_sqlite3_error(db, rc);
+  const auto callback = [&queue](int64_t id, int64_t mtime) -> bool {
+    queue.Enqueue(std::move(MapBlockKey(id, mtime)));
+    return true;
+  };
 
-  Producer(&mbq, db, min_pos, max_pos);
-  std::cout << "MapBlocks: " << mbq.size() << "\n";
+  map->ProduceMapBlocks(config.min_pos, config.max_pos, callback);
+  std::cout << "MapBlocks: " << queue.size() << "\n";
+  queue.SetTombstone();
 
   /*
     Stats stats;
@@ -146,9 +151,7 @@ void process_file(const char *filename, const MapBlockPos &min_pos,
     }
   */
 
-  rc = sqlite3_close_v2(db);
-  handle_sqlite3_error(db, rc);
-  db = nullptr;
+  map.reset();
 
   //  dump_stats(stats);
 }
@@ -161,6 +164,8 @@ static struct option long_options[] = {
     {"min", required_argument, NULL, OPT_MIN},
     {"max", required_argument, NULL, OPT_MAX},
     {"pos", required_argument, NULL, OPT_POS},
+    {"threads", required_argument, NULL, 't'},
+    {"max_load_avg", required_argument, NULL, 'l'},
     {NULL, 0, NULL, 0}};
 
 void Usage(const char *prog) {
@@ -169,16 +174,16 @@ void Usage(const char *prog) {
   std::cerr << "  --min   x,y,z - Min mapblock to examine.\n";
   std::cerr << "  --max   x,y,z - Max mapblock to examine.\n";
   std::cerr << "  --pos   x,y,z - Only mapblock to examine.\n";
+  std::cerr << "  --threads n   - Max count of consumer threads.\n";
+  std::cerr << "  --max_load_avg n - Max load average to allow.\n";
 }
 
 int main(int argc, char *argv[]) {
-  const char *filename = NULL;
-  MapBlockPos min_pos = MapBlockPos::min();
-  MapBlockPos max_pos = MapBlockPos::max();
+  Config config;
 
   while (true) {
     int option_index = 0;
-    int c = getopt_long(argc, argv, "", long_options, &option_index);
+    int c = getopt_long(argc, argv, "l:t:", long_options, &option_index);
 
     if (c < 0) {
       break;
@@ -193,26 +198,35 @@ int main(int argc, char *argv[]) {
         std::cout << "\n";
         break;
 
+      case 'l':
+        config.max_load_avg = strtod(optarg, NULL);
+        break;
+
+      case 't':
+        config.threads = strtol(optarg, NULL, 10);
+        break;
+
       case OPT_MIN:
-        if (!min_pos.parse(optarg)) {
+        if (!config.min_pos.parse(optarg)) {
           std::cerr << "ERROR: Invalid MapBlockPos value: " << optarg << "\n";
           exit(EXIT_FAILURE);
         }
         break;
 
       case OPT_MAX:
-        if (!max_pos.parse(optarg)) {
+        if (!config.max_pos.parse(optarg)) {
           std::cerr << "ERROR: Invalid MapBlockPos value: " << optarg << "\n";
           exit(EXIT_FAILURE);
         }
         break;
 
       case OPT_POS:
-        if (!min_pos.parse(optarg)) {
+        if (!config.min_pos.parse(optarg)) {
           std::cerr << "ERROR: Invalid MapBlockPos value: " << optarg << "\n";
           exit(EXIT_FAILURE);
         }
-        max_pos = min_pos;
+        config.max_pos = MapBlockPos(config.min_pos.x + 1, config.min_pos.y + 1,
+                                     config.min_pos.z + 1);
         break;
 
       default:
@@ -223,22 +237,25 @@ int main(int argc, char *argv[]) {
 
   if (optind < argc) {
     // Process non-option ARGV elements (filenames)
-    filename = argv[optind++];
+    config.map_filename = argv[optind++];
   }
 
-  min_pos.sort(&max_pos);
+  config.min_pos.sort(&config.max_pos);
 
-  std::cout << "min_pos: " << min_pos.str() << " " << min_pos.MapBlockId()
-            << "\n";
-  std::cout << "max_pos: " << max_pos.str() << " " << max_pos.MapBlockId()
-            << "\n";
-  if (!filename) {
+  std::cout << "min_pos: " << config.min_pos.str() << " "
+            << config.min_pos.MapBlockId() << "\n";
+  std::cout << "max_pos: " << config.max_pos.str() << " "
+            << config.max_pos.MapBlockId() << "\n";
+  std::cout << "threads: " << config.threads << "\n";
+  std::cout << "max_load_avg: " << config.max_load_avg << "\n";
+
+  if (config.map_filename.empty()) {
     std::cerr << "Error: Must specify path of the map.sqlite file.\n";
     Usage(argv[0]);
     exit(EXIT_FAILURE);
   }
 
-  process_file(filename, min_pos, max_pos);
+  process_file(config);
 
   return 0;
 }
