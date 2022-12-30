@@ -130,3 +130,12 @@ void DatabaseSqlite3::BindText(sqlite3_stmt *stmt, int index,
                        sqlite3_sql(stmt));
   }
 }
+
+std::vector<uint8_t> DatabaseSqlite3::ColumnBlob(sqlite3_stmt *stmt,
+                                                 int index) {
+  const uint8_t *data =
+      static_cast<const uint8_t *>(sqlite3_column_blob(stmt, index));
+  const size_t data_len = sqlite3_column_bytes(stmt, index);
+
+  return std::vector<uint8_t>(data, data + data_len);
+}

@@ -12,7 +12,7 @@ public:
   explicit MapInterfaceSqlite3(std::string_view connection_str);
   virtual ~MapInterfaceSqlite3() {}
 
-  bool LoadMapBlock(const MapBlockPos &pos, Blob *dest) override;
+  std::optional<Blob> LoadMapBlock(const MapBlockPos &pos) override;
 
   bool
   ProduceMapBlocks(const MapBlockPos &min, const MapBlockPos &max,

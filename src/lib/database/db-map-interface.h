@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "src/lib/map_reader/pos.h"
@@ -22,8 +23,8 @@ public:
 
   virtual ~MapInterface() {}
 
-  // Returns `true` if mapblock was loaded, `false` if not found.
-  virtual bool LoadMapBlock(const MapBlockPos &pos, Blob *dest) = 0;
+  // Returns the raw `map.data` blob, if available, std::nullopt if not.
+  virtual std::optional<Blob> LoadMapBlock(const MapBlockPos &pos) = 0;
 
   // Invoke the callback for each mapblock found between `min` and `max`.
   // Returns `true` after all map blocks are processed AND the `callback`

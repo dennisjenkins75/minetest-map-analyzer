@@ -85,6 +85,8 @@ public:
         reinterpret_cast<const char *>(sqlite3_column_text(stmt, index)));
   }
 
+  std::vector<uint8_t> ColumnBlob(sqlite3_stmt *stmt, int index);
+
 protected:
   std::string connection_str_;
 

@@ -23,9 +23,19 @@ MapInterfaceSqlite3::MapInterfaceSqlite3(std::string_view connection_str)
   stmt_delete_block_ = db_->Prepare(kSqlDeleteBlock);
 }
 
-bool MapInterfaceSqlite3::LoadMapBlock(const MapBlockPos &pos, Blob *dest) {
-  throw UnimplementedError("MapInterfaceSqlite3::LoadMapBlock");
-  return false;
+std::optional<MapInterface::Blob>
+MapInterfaceSqlite3::LoadMapBlock(const MapBlockPos &pos) {
+  const auto stmt = stmt_load_block_.get();
+  db_->BindInt(stmt, 1, pos.MapBlockId());
+
+  if (!db_->Step(stmt)) {
+    db_->Reset(stmt);
+    return std::nullopt; // block not found.
+  }
+
+  Blob blob = db_->ColumnBlob(stmt, 0);
+  db_->Reset(stmt);
+  return blob;
 }
 
 void MapInterfaceSqlite3::DeleteMapBlocks(
