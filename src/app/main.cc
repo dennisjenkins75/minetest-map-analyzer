@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "src/app/config.h"
+#include "src/app/factory.h"
 #include "src/app/mapblock_queue.h"
 #include "src/lib/database/db-map-interface.h"
 #include "src/lib/map_reader/blob_reader.h"
@@ -123,8 +124,7 @@ void process_block(int64_t pos, BlobReader &blob, Stats *stats) {
 
 void process_file(const Config &config) {
   MapBlockQueue queue;
-  std::unique_ptr<MapInterface> map =
-      MapInterface::Create("sqlite3", config.map_filename);
+  std::unique_ptr<MapInterface> map = CreateMapInterface(config);
 
   const auto callback = [&queue](int64_t id, int64_t mtime) -> bool {
     queue.Enqueue(std::move(MapBlockKey(id, mtime)));
