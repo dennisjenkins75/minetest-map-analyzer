@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "src/app/config.h"
-#include "src/app/producer.h"
+#include "src/app/mapblock_queue.h"
 #include "src/lib/database/db-map-interface.h"
 #include "src/lib/map_reader/blob_reader.h"
 #include "src/lib/map_reader/mapblock.h"
