@@ -30,4 +30,7 @@ struct Config {
   double max_load_avg;
 };
 
+// Writes config to spdlog.
+void DebugLogConfig(const Config &config);
+
 #endif // _MT_MAP_CONFIG_H

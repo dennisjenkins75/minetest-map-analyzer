@@ -20,6 +20,7 @@
 #include <limits>
 #include <map>
 #include <ostream>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <streambuf>
 #include <string>
@@ -28,6 +29,7 @@
 #include "src/app/config.h"
 #include "src/app/factory.h"
 #include "src/app/mapblock_queue.h"
+#include "src/app/producer.h"
 #include "src/lib/database/db-map-interface.h"
 #include "src/lib/map_reader/blob_reader.h"
 #include "src/lib/map_reader/mapblock.h"
@@ -122,40 +124,6 @@ void process_block(int64_t pos, BlobReader &blob, Stats *stats) {
   find_bones(pos, mb);
 }
 
-void process_file(const Config &config) {
-  MapBlockQueue queue;
-  std::unique_ptr<MapInterface> map = CreateMapInterface(config);
-
-  const auto callback = [&queue](int64_t id, int64_t mtime) -> bool {
-    queue.Enqueue(std::move(MapBlockKey(id, mtime)));
-    return true;
-  };
-
-  map->ProduceMapBlocks(config.min_pos, config.max_pos, callback);
-  std::cout << "MapBlocks: " << queue.size() << "\n";
-  queue.SetTombstone();
-
-  /*
-    Stats stats;
-    while (true) {
-      const int64_t pos = sqlite3_column_int64(stmt, 0);
-      const uint8_t *data =
-          static_cast<const uint8_t *>(sqlite3_column_blob(stmt, 1));
-      const size_t data_len = sqlite3_column_bytes(stmt, 1);
-
-      // Sadly, we must make a copy... :(
-      const std::vector<uint8_t> raw_data(data, data + data_len);
-      BlobReader blob(raw_data);
-
-      process_block(pos, blob, &stats);
-    }
-  */
-
-  map.reset();
-
-  //  dump_stats(stats);
-}
-
 static const int OPT_MIN = 257;
 static const int OPT_MAX = 258;
 static const int OPT_POS = 259;
@@ -179,6 +147,7 @@ void Usage(const char *prog) {
 }
 
 int main(int argc, char *argv[]) {
+  spdlog::set_level(spdlog::level::trace);
   Config config;
 
   while (true) {
@@ -241,13 +210,7 @@ int main(int argc, char *argv[]) {
   }
 
   config.min_pos.sort(&config.max_pos);
-
-  std::cout << "min_pos: " << config.min_pos.str() << " "
-            << config.min_pos.MapBlockId() << "\n";
-  std::cout << "max_pos: " << config.max_pos.str() << " "
-            << config.max_pos.MapBlockId() << "\n";
-  std::cout << "threads: " << config.threads << "\n";
-  std::cout << "max_load_avg: " << config.max_load_avg << "\n";
+  DebugLogConfig(config);
 
   if (config.map_filename.empty()) {
     std::cerr << "Error: Must specify path of the map.sqlite file.\n";
@@ -255,7 +218,9 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  process_file(config);
+  MapBlockQueue queue;
+
+  RunProducer(config, &queue);
 
   return 0;
 }
