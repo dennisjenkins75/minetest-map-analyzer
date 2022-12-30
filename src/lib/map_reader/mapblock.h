@@ -25,6 +25,7 @@ public:
 
   MapBlock();
 
+  // TODO: Change 2nd arg to 'const MapBlockPos &pos'.
   bool deserialize(BlobReader &blob, int64_t pos_id);
 
   uint8_t version() { return version_; }
@@ -56,6 +57,7 @@ private:
   bool deserialize_nodes(BlobReader &blob);
 
   // Extracts ALL metadata.
+  // TODO: Change 2nd arg to 'const MapBlockPos &pos'.
   bool deserialize_metadata(BlobReader &blob, int64_t pos_id);
 
   bool deserialize_name_id_mapping(BlobReader &blob);

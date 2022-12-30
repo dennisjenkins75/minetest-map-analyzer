@@ -87,6 +87,11 @@ struct NodePos : public Pos<int64_t> {
   // "node pos" (from within that mapblock).
   NodePos(int64_t mapblock_id, uint16_t node_id);
 
+  // Construct from a "map block pos" (database column), and a relative
+  // "node pos" (from within that mapblock).
+  NodePos(const MapBlockPos &pos, uint16_t node_id)
+      : NodePos(pos.MapBlockId(), node_id) {}
+
   // Returns sqlite3 "map.sqlite, blocks.id" value of mapblock that contains
   // this node.
   int64_t MapBlockId() const;
