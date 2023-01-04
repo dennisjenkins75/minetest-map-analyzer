@@ -61,7 +61,7 @@ bool Node::deserialize_metadata(BlobReader &blob, uint8_t version,
     metadata_.push_back(std::move(var));
   }
 
-  if (!deserialize_inventory(&inventory_, blob)) {
+  if (!inventory_.deserialize_inventory(blob)) {
     return false;
   }
 

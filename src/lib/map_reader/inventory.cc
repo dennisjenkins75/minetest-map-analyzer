@@ -15,7 +15,7 @@ const std::regex re_empty("Empty");
 const std::string end_list = "EndInventoryList";
 const std::string end_inventory = "EndInventory";
 
-bool deserialize_inventory(Inventory *dest, BlobReader &blob) {
+bool Inventory::deserialize_inventory(BlobReader &blob) {
   if (DEBUG) {
     std::cout << CYAN << "deserialize_inventory:\n" << CLEAR;
     const size_t len = std::min(static_cast<size_t>(1024), blob.remaining());
@@ -47,7 +47,7 @@ bool deserialize_inventory(Inventory *dest, BlobReader &blob) {
     // If the item string is HUGE then std::regex can exhaust its stack
     // and segfault.  Ex: A crated digtron inside a chest.
     if ((line.size() > 4096) && (line.substr(0, 5) == "Item ")) {
-      current.push_back(line.substr(5));
+      current.add(std::move(line.substr(5)));
       continue;
     }
 
@@ -55,7 +55,7 @@ bool deserialize_inventory(Inventory *dest, BlobReader &blob) {
       if (list_name.empty()) {
         return false;
       }
-      current.push_back(sm[1]);
+      current.add(std::move(sm[1]));
       continue;
     }
 
@@ -63,12 +63,12 @@ bool deserialize_inventory(Inventory *dest, BlobReader &blob) {
       if (list_name.empty()) {
         return false;
       }
-      current.push_back(sm[1]);
+      current.add(std::move(sm[1]));
       continue;
     }
 
     if (line == end_list) {
-      (*dest)[list_name] = std::move(current);
+      lists_[list_name] = std::move(current);
       list_name.clear();
       current.clear();
       continue;
@@ -89,39 +89,41 @@ bool deserialize_inventory(Inventory *dest, BlobReader &blob) {
 
 static const std::regex re_minegeld("currency:minegeld(_)?(\\d+)?( \\d+)?");
 
-uint64_t total_minegeld_in_inventory(const Inventory &inventory) {
+uint64_t InventoryList::total_minegeld() const {
   uint64_t total = 0;
 
-  for (const auto &type : inventory) {
-    for (const auto &item_str : type.second) {
-      std::smatch sm;
-      if (std::regex_match(item_str, sm, re_minegeld)) {
-        if (sm.size() == 4) {
-          int denom = strtoul(sm[2].str().c_str(), nullptr, 10);
-          int qty = strtoul(sm[3].str().c_str(), nullptr, 10);
-          total += (denom * qty);
-          continue;
-        }
-
-        /*
-                std::cout << "sm.size(): " << sm.size() << "\n";
-                //for (const auto &foo: sm) { std::cout << "  " << foo << "\n";
-           } std::cout << RED << item_str << CLEAR << "\n"; exit(-1);
-        */
-      }
-
-      if (item_str.find("currency:minegeld_cent") != std::string::npos) {
+  for (const auto &item_str : list_) {
+    std::smatch sm;
+    if (std::regex_match(item_str, sm, re_minegeld)) {
+      if (sm.size() == 4) {
+        int denom = strtoul(sm[2].str().c_str(), nullptr, 10);
+        int qty = strtoul(sm[3].str().c_str(), nullptr, 10);
+        total += (denom * qty);
         continue;
-      }
-      if (item_str.find("currency:minegeld_bundle") != std::string::npos) {
-        continue;
-      }
-
-      if (item_str.find("currency:minegeld") != std::string::npos) {
-        std::cout << RED << item_str << CLEAR << "\n";
-        exit(-1);
       }
     }
+
+    if (item_str.find("currency:minegeld_cent") != std::string::npos) {
+      continue;
+    }
+    if (item_str.find("currency:minegeld_bundle") != std::string::npos) {
+      continue;
+    }
+
+    if (item_str.find("currency:minegeld") != std::string::npos) {
+      std::cout << RED << item_str << CLEAR << "\n";
+      exit(-1);
+    }
+  }
+
+  return total;
+}
+
+uint64_t Inventory::total_minegeld() const {
+  uint64_t total = 0;
+
+  for (const auto &type : lists_) {
+    total += type.second.total_minegeld();
   }
 
   return total;

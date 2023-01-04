@@ -59,7 +59,7 @@ void find_currency_hoard(const MapBlockPos &pos, const MapBlock &mb) {
   for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
     const Node &node = mb.nodes()[i];
 
-    uint64_t minegeld = total_minegeld_in_inventory(node.inventory());
+    uint64_t minegeld = node.inventory().total_minegeld();
     if (minegeld > 0) {
       const std::string &name = mb.name_for_id(node.param0());
       std::cout << "minegeld: " << std::setw(12) << minegeld << " "
@@ -88,7 +88,6 @@ void RunConsumer(const Config &config, MapBlockQueue *queue) {
     const MapBlockKey key = queue->Pop();
     if (key.isTombstone()) {
       spdlog::debug("Tombstone");
-
       break;
     }
     const MapBlockPos pos(key.pos);
