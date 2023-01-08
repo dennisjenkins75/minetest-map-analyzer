@@ -21,8 +21,8 @@ public:
   void DeleteMapBlocks(const std::vector<MapBlockPos> &list) override;
 
 protected:
-  std::unique_ptr<DatabaseSqlite3> db_;
-  DatabaseSqlite3::StmtPointer stmt_load_block_;
-  DatabaseSqlite3::StmtPointer stmt_list_blocks_;
-  DatabaseSqlite3::StmtPointer stmt_delete_block_;
+  std::unique_ptr<SqliteDb> db_;
+  SqliteDb::StmtPointer stmt_load_block_;
+  SqliteDb::StmtPointer stmt_list_blocks_;
+  SqliteDb::StmtPointer stmt_delete_block_;
 };

@@ -23,12 +23,12 @@ protected:
   std::string sql_;
 };
 
-class DatabaseSqlite3 {
+class SqliteDb {
 public:
-  DatabaseSqlite3() = delete;
+  SqliteDb() = delete;
 
-  explicit DatabaseSqlite3(std::string_view connection_str);
-  virtual ~DatabaseSqlite3();
+  explicit SqliteDb(std::string_view connection_str);
+  virtual ~SqliteDb();
 
   // https://stackoverflow.com/a/45215544
   struct sqlite3_deleter {

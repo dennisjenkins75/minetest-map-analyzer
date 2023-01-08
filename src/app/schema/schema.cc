@@ -10,7 +10,7 @@ where type='table' and name='actor';
 )sql";
 
 void VerifySchema(const std::string &filename) {
-  DatabaseSqlite3 db(filename);
+  SqliteDb db(filename);
 
   auto stmt = db.Prepare(kSqlCheckSchema);
   db.Step(stmt.get());

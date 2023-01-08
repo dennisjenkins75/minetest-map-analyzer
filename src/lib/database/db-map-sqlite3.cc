@@ -16,7 +16,7 @@ delete from blocks where pos = :pos
 
 MapInterfaceSqlite3::MapInterfaceSqlite3(std::string_view connection_str)
     : db_(), stmt_load_block_(), stmt_list_blocks_(), stmt_delete_block_() {
-  db_ = std::make_unique<DatabaseSqlite3>(connection_str);
+  db_ = std::make_unique<SqliteDb>(connection_str);
 
   stmt_load_block_ = db_->Prepare(kSqlLoadBlock);
   stmt_list_blocks_ = db_->Prepare(kSqlListBlocks);
