@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <memory>
+#include <vector>
 
 #include "src/lib/exceptions/exceptions.h"
 

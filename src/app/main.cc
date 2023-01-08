@@ -31,6 +31,7 @@
 #include "src/app/factory.h"
 #include "src/app/mapblock_queue.h"
 #include "src/app/producer.h"
+#include "src/app/schema/schema.h"
 #include "src/lib/database/db-map-interface.h"
 #include "src/lib/map_reader/blob_reader.h"
 #include "src/lib/map_reader/mapblock.h"
@@ -38,26 +39,32 @@
 #include "src/lib/map_reader/pos.h"
 #include "src/lib/map_reader/utils.h"
 
-static const int OPT_MIN = 257;
-static const int OPT_MAX = 258;
-static const int OPT_POS = 259;
+static constexpr int OPT_MIN = 257;
+static constexpr int OPT_MAX = 258;
+static constexpr int OPT_POS = 259;
+static constexpr int OPT_MAP = 260;
+static constexpr int OPT_DATA = 261;
 
 static struct option long_options[] = {
     {"min", required_argument, NULL, OPT_MIN},
     {"max", required_argument, NULL, OPT_MAX},
     {"pos", required_argument, NULL, OPT_POS},
+    {"map", required_argument, NULL, OPT_MAP},
+    {"data", required_argument, NULL, OPT_DATA},
     {"threads", required_argument, NULL, 't'},
     {"max_load_avg", required_argument, NULL, 'l'},
     {NULL, 0, NULL, 0}};
 
 void Usage(const char *prog) {
-  std::cerr << "Usage: " << prog << " [options] filename\n";
+  std::cerr << "Usage: " << prog << " [options]\n";
   std::cerr << "Options: \n";
   std::cerr << "  --min   x,y,z - Min mapblock to examine.\n";
   std::cerr << "  --max   x,y,z - Max mapblock to examine.\n";
   std::cerr << "  --pos   x,y,z - Only mapblock to examine.\n";
   std::cerr << "  --threads n   - Max count of consumer threads.\n";
   std::cerr << "  --max_load_avg n - Max load average to allow.\n";
+  std::cerr << "  --map   filename - Path to map.sqlite file (REQUIRED).\n";
+  std::cerr << "  --data  filename - Path to filename to store all data in.\n";
 }
 
 int main(int argc, char *argv[]) {
@@ -112,6 +119,14 @@ int main(int argc, char *argv[]) {
                                      config.min_pos.z + 1);
         break;
 
+      case OPT_MAP:
+        config.map_filename = optarg;
+        break;
+
+      case OPT_DATA:
+        config.data_filename = optarg;
+        break;
+
       default:
         std::cerr << "Unrecognized getopt_long() result of " << c << "\n";
         break;
@@ -119,18 +134,27 @@ int main(int argc, char *argv[]) {
   }
 
   if (optind < argc) {
-    // Process non-option ARGV elements (filenames)
-    config.map_filename = argv[optind++];
+    std::cerr << "Unrecognized extra command line args\n";
+    Usage(argv[0]);
+    exit(EXIT_FAILURE);
   }
 
   config.min_pos.sort(&config.max_pos);
   DebugLogConfig(config);
 
   if (config.map_filename.empty()) {
-    std::cerr << "Error: Must specify path of the map.sqlite file.\n";
+    std::cerr << "Error: required argument '--map' is missing.\n";
     Usage(argv[0]);
     exit(EXIT_FAILURE);
   }
+
+  if (config.data_filename.empty()) {
+    std::cerr << "Error: required argument '--data' is missing.\n";
+    Usage(argv[0]);
+    exit(EXIT_FAILURE);
+  }
+
+  VerifySchema(config.data_filename);
 
   MapBlockQueue queue;
 

@@ -6,6 +6,7 @@ rm -rf tmp/test
 
 [[ -f Makefile ]] && make clean
 
+rm -rf .premake/
 premake5 --os=linux gmake
 
 make -j20

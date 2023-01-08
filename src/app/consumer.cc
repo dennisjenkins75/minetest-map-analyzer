@@ -1,8 +1,8 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <map>
 #include <ostream>
+#include <unordered_map>
 
 #include <spdlog/spdlog.h>
 
@@ -26,7 +26,7 @@ struct Stats {
   int64_t by_version[256];
 
   // Count of nodes of each type.
-  std::map<std::string, int64_t> by_type;
+  std::unordered_map<std::string, int64_t> by_type;
 
   Stats() : total_map_blocks(0), bad_map_blocks(0), by_version{}, by_type() {}
 };
@@ -53,31 +53,6 @@ void dump_stats(const Stats &stats) {
     ofs << std::setw(12) << n.second << " " << n.first << "\n";
   }
   ofs.close();
-}
-
-void find_currency_hoard(const MapBlockPos &pos, const MapBlock &mb) {
-  for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
-    const Node &node = mb.nodes()[i];
-
-    uint64_t minegeld = node.inventory().total_minegeld();
-    if (minegeld > 0) {
-      const std::string &name = mb.name_for_id(node.param0());
-      std::cout << "minegeld: " << std::setw(12) << minegeld << " "
-                << NodePos(pos, i).str() << " " << name << "\n";
-    }
-  }
-}
-
-void find_bones(const MapBlockPos &pos, const MapBlock &mb) {
-  for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
-    const Node &node = mb.nodes()[i];
-
-    const std::string &name = mb.name_for_id(node.param0());
-    if (name == "bones:bones") {
-      const std::string owner = node.get_meta("_owner");
-      std::cout << "bones: " << NodePos(pos, i).str() << " " << owner << "\n";
-    }
-  }
 }
 
 void RunConsumer(const Config &config, MapBlockQueue *queue) {
@@ -115,10 +90,21 @@ void RunConsumer(const Config &config, MapBlockQueue *queue) {
       const std::string &name = mb.name_for_id(node.param0());
 
       stats.by_type[name]++;
-    }
 
-    find_currency_hoard(pos, mb);
-    find_bones(pos, mb);
+      // TODO: Determine if inventory has anything in it, and if yes,
+      // write the node to the output database.
+
+      uint64_t minegeld = node.inventory().total_minegeld();
+      if (minegeld > 0) {
+        std::cout << "minegeld: " << std::setw(12) << minegeld << " "
+                  << NodePos(pos, i).str() << " " << name << "\n";
+      }
+
+      if (name == "bones:bones") {
+        const std::string owner = node.get_meta("_owner");
+        std::cout << "bones: " << NodePos(pos, i).str() << " " << owner << "\n";
+      }
+    }
   }
 
   dump_stats(stats);

@@ -125,6 +125,8 @@ project "map_reader_lib"
     filter {"action:gmake or action:gmake2"}
         enablewarnings{"all"}
 
+    filter {}  -- reset filter
+
 project "database_lib"
     hide_project_makefile()
     cpp_library()
@@ -137,7 +139,28 @@ project "database_lib"
     filter {"action:gmake or action:gmake2"}
         enablewarnings{"all"}
 
+    filter {}  -- reset filter
 
+
+project "schema_lib"
+    hide_project_makefile()
+    cpp_library()
+
+    files { "src/app/schema/**.sql", "src/app/schema/**.cc" }
+
+    filter 'files:**.sql'
+        buildmessage 'Compiling %{file.relpath}'
+        buildcommands {
+            -- https://csl.name/post/embedding-binary-data/
+            -- https://stackoverflow.com/q/4158900
+            'ld -r -b binary -o "%{cfg.objdir}/%{file.basename}.o" "%{file.relpath}"'
+        }
+        buildoutputs { '%{cfg.objdir}/%{file.basename}.o' }
+
+    filter {"action:gmake or action:gmake2"}
+        enablewarnings{"all"}
+
+    filter {}  -- reset filter
 
 project "unit_tests"
     hide_project_makefile()
@@ -163,6 +186,8 @@ project "unit_tests"
         disablewarnings { "sign-compare" }
         enablewarnings { "all" }
 
+    filter {}  -- reset filter
+
 project "map_analyzer"
     hide_project_makefile()
     kind "ConsoleApp"
@@ -180,7 +205,7 @@ project "map_analyzer"
     include_spdlog()
     include_sqlite()
     systemversion "latest"
-    links { "database_lib", "map_reader_lib", "absl_strings" }
+    links { "database_lib", "map_reader_lib", "absl_strings", "schema_lib" }
 
     filter { "system:linux" }
         links { "pthread", "z" }
@@ -188,3 +213,5 @@ project "map_analyzer"
     filter { "action:gmake or action:gmake2" }
         disablewarnings { "sign-compare" }
         enablewarnings { "all" }
+
+    filter {}  -- reset filter
