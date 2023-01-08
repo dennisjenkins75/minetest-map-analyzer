@@ -18,23 +18,23 @@ MapInterfaceSqlite3::MapInterfaceSqlite3(std::string_view connection_str)
     : db_(), stmt_load_block_(), stmt_list_blocks_(), stmt_delete_block_() {
   db_ = std::make_unique<SqliteDb>(connection_str);
 
-  stmt_load_block_ = db_->Prepare(kSqlLoadBlock);
-  stmt_list_blocks_ = db_->Prepare(kSqlListBlocks);
-  stmt_delete_block_ = db_->Prepare(kSqlDeleteBlock);
+  stmt_load_block_ = std::make_unique<SqliteStmt>(*db_.get(), kSqlLoadBlock);
+  stmt_list_blocks_ = std::make_unique<SqliteStmt>(*db_.get(), kSqlListBlocks);
+  stmt_delete_block_ =
+      std::make_unique<SqliteStmt>(*db_.get(), kSqlDeleteBlock);
 }
 
 std::optional<MapInterface::Blob>
 MapInterfaceSqlite3::LoadMapBlock(const MapBlockPos &pos) {
-  const auto stmt = stmt_load_block_.get();
-  db_->BindInt(stmt, 1, pos.MapBlockId());
+  stmt_load_block_->BindInt(1, pos.MapBlockId());
 
-  if (!db_->Step(stmt)) {
-    db_->Reset(stmt);
+  if (!stmt_load_block_->Step()) {
+    stmt_load_block_->Reset();
     return std::nullopt; // block not found.
   }
 
-  Blob blob = db_->ColumnBlob(stmt, 0);
-  db_->Reset(stmt);
+  Blob blob = stmt_load_block_->ColumnBlob(0);
+  stmt_load_block_->Reset();
   return blob;
 }
 
@@ -46,13 +46,13 @@ void MapInterfaceSqlite3::DeleteMapBlocks(
 bool MapInterfaceSqlite3::ProduceMapBlocks(
     const MapBlockPos &min, const MapBlockPos &max,
     std::function<bool(int64_t, int64_t)> callback) {
-  const auto stmt = stmt_list_blocks_.get();
-  db_->BindInt(stmt, 1, min.MapBlockId());
-  db_->BindInt(stmt, 2, max.MapBlockId());
 
-  while (db_->Step(stmt)) {
-    const int64_t pos = db_->ColumnInt64(stmt, 0);
-    const int64_t mtime = db_->ColumnInt64(stmt, 1);
+  stmt_list_blocks_->BindInt(1, min.MapBlockId());
+  stmt_list_blocks_->BindInt(2, max.MapBlockId());
+
+  while (stmt_list_blocks_->Step()) {
+    const int64_t pos = stmt_list_blocks_->ColumnInt64(0);
+    const int64_t mtime = stmt_list_blocks_->ColumnInt64(1);
 
     if (!MapBlockPos(pos).inside(min, max)) {
       continue;
@@ -63,6 +63,6 @@ bool MapInterfaceSqlite3::ProduceMapBlocks(
     }
   }
 
-  db_->Reset(stmt);
+  stmt_load_block_->Reset();
   return true;
 }

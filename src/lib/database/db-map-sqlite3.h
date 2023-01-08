@@ -22,7 +22,7 @@ public:
 
 protected:
   std::unique_ptr<SqliteDb> db_;
-  SqliteDb::StmtPointer stmt_load_block_;
-  SqliteDb::StmtPointer stmt_list_blocks_;
-  SqliteDb::StmtPointer stmt_delete_block_;
+  std::unique_ptr<SqliteStmt> stmt_load_block_;
+  std::unique_ptr<SqliteStmt> stmt_list_blocks_;
+  std::unique_ptr<SqliteStmt> stmt_delete_block_;
 };

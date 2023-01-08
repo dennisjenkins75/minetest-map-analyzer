@@ -12,12 +12,14 @@ where type='table' and name='actor';
 void VerifySchema(const std::string &filename) {
   SqliteDb db(filename);
 
-  auto stmt = db.Prepare(kSqlCheckSchema);
-  db.Step(stmt.get());
-  const int count = db.ColumnInt64(stmt.get(), 0);
+  SqliteStmt stmt(db, kSqlCheckSchema);
+  stmt.Step();
+
+  const int count = stmt.ColumnInt64(0);
   if (count > 0) {
     return;
   }
+  stmt.Reset();
 
   spdlog::info("Created schema in {0}", filename);
   db.Begin();
