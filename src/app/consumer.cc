@@ -13,6 +13,7 @@
 #include "src/lib/map_reader/utils.h"
 
 void App::RunConsumer() {
+  spdlog::trace("Consumer entry");
   std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
 
   while (true) {
@@ -62,4 +63,6 @@ void App::RunConsumer() {
       }
     }
   }
+
+  spdlog::trace("Consumer exit");
 }

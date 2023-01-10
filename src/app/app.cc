@@ -1,5 +1,7 @@
 #include <chrono>
 #include <spdlog/spdlog.h>
+#include <thread>
+#include <vector>
 
 #include "src/app/app.h"
 #include "src/app/schema/schema.h"
@@ -13,11 +15,30 @@ void App::RunSerially() {
   RunConsumer();
 }
 
+void App::RunThreaded() {
+  std::thread producer_thread(&App::RunProducer, this);
+
+  std::vector<std::thread> consumer_threads;
+  consumer_threads.reserve(config_.threads);
+  for (int i = 0; i < config_.threads; ++i) {
+    consumer_threads.push_back(std::thread(&App::RunConsumer, this));
+  }
+
+  spdlog::trace("Main thread waiting for worker to finish");
+
+  producer_thread.join();
+  for (auto &t : consumer_threads) {
+    t.join();
+  }
+}
+
 void App::Run() {
   VerifySchema(config_.data_filename);
 
   const auto t0 = std::chrono::steady_clock::now();
-  if (config_.threads == 0) {
+  if (config_.threads) {
+    RunThreaded();
+  } else {
     RunSerially();
   }
   const auto t1 = std::chrono::steady_clock::now();

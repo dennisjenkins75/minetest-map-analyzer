@@ -22,10 +22,18 @@ private:
   MapBlockQueue map_block_queue_;
   Stats stats_;
 
+  // Can be called directly (on main thread), or as a thread body.
+  // Exits when all mapblocks have been produced.
   void RunProducer();
+
+  // Can be called directly on main thread, or as a thread body.
+  // Will exit when tombstone is observed.
   void RunConsumer();
 
   // Primarily for "correctness" debugging, this method runs the entire
   // pipeline serially, on the main thread (no worker threads).
   void RunSerially();
+
+  // Run with worker threads.
+  void RunThreaded();
 };
