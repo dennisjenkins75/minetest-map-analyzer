@@ -54,12 +54,15 @@ function hide_project_makefile()
     filter { "configurations:Release" }
         targetdir "bin/Release"
 
+    filter { "configurations:Profile" }
+        targetdir "bin/Profile"
+
     -- Reset filter before exiting, or the 'Release' filter will remain active.
     filter {}
 end
 
 workspace "MinetestMapSearch"
-    configurations { "Debug", "Release" }
+    configurations { "Debug", "Release", "Profile" }
 
     filter { "configurations:Debug" }
         optimize "Off"
@@ -68,6 +71,12 @@ workspace "MinetestMapSearch"
     filter { "configurations:Release" }
         optimize "On"
         symbols "On"
+
+    filter { "configurations:Profile", "system:linux" }
+        optimize "On"
+        symbols "On"
+        linkoptions{  "-pg" }
+        buildoptions{ "-pg" }
 
 project "lib_gtest"
     hide_project_makefile()
