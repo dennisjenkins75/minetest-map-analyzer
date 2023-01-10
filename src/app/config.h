@@ -10,7 +10,7 @@
 struct Config {
   Config()
       : min_pos(MapBlockPos::min()), max_pos(MapBlockPos::max()),
-        map_filename(), data_filename(), threads(1),
+        map_filename(), data_filename(), threads(0),
         max_load_avg(std::thread::hardware_concurrency()) {}
 
   MapBlockPos min_pos;

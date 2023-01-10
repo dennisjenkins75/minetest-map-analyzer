@@ -8,14 +8,18 @@ App::App(Config &config)
     : config_(config), actor_ids_(), node_ids_(), map_block_queue_(), stats_() {
 }
 
+void App::RunSerially() {
+  RunProducer();
+  RunConsumer();
+}
+
 void App::Run() {
   VerifySchema(config_.data_filename);
 
   const auto t0 = std::chrono::steady_clock::now();
-
-  RunProducer();
-  RunConsumer();
-
+  if (config_.threads == 0) {
+    RunSerially();
+  }
   const auto t1 = std::chrono::steady_clock::now();
 
   const std::chrono::duration<double> diff = t1 - t0;

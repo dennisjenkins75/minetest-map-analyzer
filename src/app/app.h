@@ -24,4 +24,8 @@ private:
 
   void RunProducer();
   void RunConsumer();
+
+  // Primarily for "correctness" debugging, this method runs the entire
+  // pipeline serially, on the main thread (no worker threads).
+  void RunSerially();
 };

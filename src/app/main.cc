@@ -19,8 +19,10 @@ static constexpr int OPT_MAX = 258;
 static constexpr int OPT_POS = 259;
 static constexpr int OPT_MAP = 260;
 static constexpr int OPT_DATA = 261;
+static constexpr int OPT_HELP = 262;
 
 static struct option long_options[] = {
+    {"help", no_argument, NULL, OPT_HELP},
     {"min", required_argument, NULL, OPT_MIN},
     {"max", required_argument, NULL, OPT_MAX},
     {"pos", required_argument, NULL, OPT_POS},
@@ -33,10 +35,11 @@ static struct option long_options[] = {
 void Usage(const char *prog) {
   std::cerr << "Usage: " << prog << " [options]\n";
   std::cerr << "Options: \n";
-  std::cerr << "  --min   x,y,z - Min mapblock to examine.\n";
-  std::cerr << "  --max   x,y,z - Max mapblock to examine.\n";
-  std::cerr << "  --pos   x,y,z - Only mapblock to examine.\n";
-  std::cerr << "  --threads n   - Max count of consumer threads.\n";
+  std::cerr << "  --help           - Display this help.\n";
+  std::cerr << "  --min   x,y,z    - Min mapblock to examine.\n";
+  std::cerr << "  --max   x,y,z    - Max mapblock to examine.\n";
+  std::cerr << "  --pos   x,y,z    - Only mapblock to examine.\n";
+  std::cerr << "  --threads n      - Max count of consumer threads.\n";
   std::cerr << "  --max_load_avg n - Max load average to allow.\n";
   std::cerr << "  --map   filename - Path to map.sqlite file (REQUIRED).\n";
   std::cerr << "  --data  filename - Path to filename to store all data in.\n";
@@ -69,6 +72,11 @@ int main(int argc, char *argv[]) {
 
       case 't':
         config.threads = strtol(optarg, NULL, 10);
+        break;
+
+      case OPT_HELP:
+        Usage(argv[0]);
+        exit(EXIT_SUCCESS);
         break;
 
       case OPT_MIN:
