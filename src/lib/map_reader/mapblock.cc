@@ -11,15 +11,6 @@ MapBlock::MapBlock()
       timestamp_(0), num_name_id_mappings_(0), content_width_(0),
       params_width_(0), nodes_() {}
 
-const std::string &MapBlock::name_for_id(uint16_t id) const {
-  static const std::string _unknown("unknown");
-
-  if (id > name_id_mapping_.size()) {
-    return _unknown;
-  }
-  return name_id_mapping_[id];
-}
-
 bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id) {
   // u8 version
   if (!blob.read_u8(&version_, "version")) {

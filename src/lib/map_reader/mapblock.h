@@ -32,7 +32,14 @@ public:
 
   const std::vector<Node> &nodes() const { return nodes_; }
 
-  const std::string &name_for_id(uint16_t id) const;
+  const std::string &name_for_id(uint16_t id) const {
+    static const std::string _unknown("unknown");
+
+    if (id > name_id_mapping_.size()) {
+      return _unknown;
+    }
+    return name_id_mapping_[id];
+  }
 
 private:
   // Overall, was the deserialiation 100% successful?
