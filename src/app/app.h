@@ -4,6 +4,7 @@
 
 #include "src/app/config.h"
 #include "src/app/mapblock_queue.h"
+#include "src/app/stats.h"
 #include "src/lib/id_cache/id_cache.h"
 
 class App {
@@ -19,6 +20,7 @@ private:
   IdCache actor_ids_;
   IdCache node_ids_;
   MapBlockQueue map_block_queue_;
+  Stats stats_;
 
   void RunProducer();
   void RunConsumer();

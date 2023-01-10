@@ -1,8 +1,5 @@
-#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <ostream>
-#include <unordered_map>
 
 #include <spdlog/spdlog.h>
 
@@ -15,49 +12,8 @@
 #include "src/lib/map_reader/pos.h"
 #include "src/lib/map_reader/utils.h"
 
-struct Stats {
-  // Total count of map blocks.
-  int64_t total_map_blocks;
-
-  // Count of map blocks that failed to parse.
-  int64_t bad_map_blocks;
-
-  // Count of map blocks for each version.
-  int64_t by_version[256];
-
-  // Count of nodes of each type.
-  std::unordered_map<std::string, int64_t> by_type;
-
-  Stats() : total_map_blocks(0), bad_map_blocks(0), by_version{}, by_type() {}
-};
-
-void dump_stats(const Stats &stats) {
-  std::ofstream ofs("stats.out");
-
-  ofs << "bad_map_blocks: " << stats.bad_map_blocks << "\n";
-  ofs << "total_map_blocks: " << stats.total_map_blocks << "\n";
-  ofs << "bad %: "
-      << 100.0 * static_cast<double>(stats.bad_map_blocks) /
-             static_cast<double>(stats.total_map_blocks)
-      << "\n";
-
-  for (int i = 0; i < 256; i++) {
-    if (stats.by_version[i]) {
-      ofs << "version: " << i << " = " << stats.by_version[i] << "\n";
-    }
-  }
-  ofs.close();
-
-  ofs.open("nodes-by-type.out");
-  for (const auto &n : stats.by_type) {
-    ofs << std::setw(12) << n.second << " " << n.first << "\n";
-  }
-  ofs.close();
-}
-
 void App::RunConsumer() {
   std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
-  Stats stats;
 
   while (true) {
     const MapBlockKey key = map_block_queue_.Pop();
@@ -75,21 +31,21 @@ void App::RunConsumer() {
     BlobReader blob(raw_data.value());
     MapBlock mb;
 
+    stats_.IncrTotalBlocks();
+    stats_.IncrByVersion(mb.version());
+
     if (!mb.deserialize(blob, key.pos)) {
-      stats.bad_map_blocks++;
+      stats_.IncrBadBlocks();
       spdlog::error("Failed to deserialize mapblock {0} {1}", pos.str(),
                     key.pos);
       continue;
     }
 
-    stats.total_map_blocks++;
-    stats.by_version[mb.version()]++;
-
     for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
       const Node &node = mb.nodes()[i];
       const std::string &name = mb.name_for_id(node.param0());
 
-      stats.by_type[name]++;
+      stats_.IncrNodeByType(name);
 
       // TODO: Determine if inventory has anything in it, and if yes,
       // write the node to the output database.
@@ -106,6 +62,4 @@ void App::RunConsumer() {
       }
     }
   }
-
-  dump_stats(stats);
 }
