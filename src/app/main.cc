@@ -4,40 +4,15 @@
 // Only supports mapblock version 28 ('1c') (minetest-5.4.x, multicraft-2.0.x)
 // https://github.com/minetest/minetest/blob/master/doc/world_format.txt
 
-#include <arpa/inet.h>
 #include <getopt.h>
-#include <inttypes.h>
-#include <sqlite3.h>
-#include <stdlib.h>
 #include <string.h>
-#include <zlib.h>
 
-#include <cassert>
-#include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <istream>
 #include <limits>
-#include <map>
-#include <ostream>
 #include <spdlog/spdlog.h>
-#include <sstream>
-#include <streambuf>
-#include <string>
-#include <vector>
 
+#include "src/app/app.h"
 #include "src/app/config.h"
-#include "src/app/consumer.h"
-#include "src/app/factory.h"
-#include "src/app/mapblock_queue.h"
-#include "src/app/producer.h"
-#include "src/app/schema/schema.h"
-#include "src/lib/database/db-map-interface.h"
-#include "src/lib/map_reader/blob_reader.h"
-#include "src/lib/map_reader/mapblock.h"
-#include "src/lib/map_reader/node.h"
-#include "src/lib/map_reader/pos.h"
-#include "src/lib/map_reader/utils.h"
 
 static constexpr int OPT_MIN = 257;
 static constexpr int OPT_MAX = 258;
@@ -154,12 +129,8 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  VerifySchema(config.data_filename);
-
-  MapBlockQueue queue;
-
-  RunProducer(config, &queue);
-  RunConsumer(config, &queue);
+  App app(config);
+  app.Run();
 
   return 0;
 }

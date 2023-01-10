@@ -6,7 +6,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "src/app/consumer.h"
+#include "src/app/app.h"
 #include "src/app/factory.h"
 #include "src/lib/database/db-map-interface.h"
 #include "src/lib/map_reader/blob_reader.h"
@@ -55,12 +55,12 @@ void dump_stats(const Stats &stats) {
   ofs.close();
 }
 
-void RunConsumer(const Config &config, MapBlockQueue *queue) {
-  std::unique_ptr<MapInterface> map = CreateMapInterface(config);
+void App::RunConsumer() {
+  std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
   Stats stats;
 
   while (true) {
-    const MapBlockKey key = queue->Pop();
+    const MapBlockKey key = map_block_queue_.Pop();
     if (key.isTombstone()) {
       spdlog::debug("Tombstone");
       break;

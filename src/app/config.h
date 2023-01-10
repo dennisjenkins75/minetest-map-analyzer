@@ -1,5 +1,4 @@
-#ifndef _MT_MAP_CONFIG_H
-#define _MT_MAP_CONFIG_H
+#pragma once
 
 #include <thread>
 
@@ -35,5 +34,3 @@ struct Config {
 
 // Writes config to spdlog.
 void DebugLogConfig(const Config &config);
-
-#endif // _MT_MAP_CONFIG_H
