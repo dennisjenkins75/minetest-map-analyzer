@@ -5,7 +5,7 @@
 #include "src/app/config.h"
 #include "src/app/mapblock_queue.h"
 #include "src/app/stats.h"
-#include "src/lib/id_cache/id_cache.h"
+#include "src/lib/id_map/id_map.h"
 
 class App {
 public:
@@ -17,8 +17,8 @@ public:
 
 private:
   Config config_;
-  IdCache actor_ids_;
-  IdCache node_ids_;
+  IdMap actor_ids_;
+  IdMap node_ids_;
   MapBlockQueue map_block_queue_;
   Stats stats_;
 

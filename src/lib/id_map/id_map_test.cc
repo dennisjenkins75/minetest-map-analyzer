@@ -1,12 +1,12 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "src/lib/id_cache/id_cache.h"
+#include "src/lib/id_map/id_map.h"
 
 using ::testing::Eq;
 
-TEST(IdCache, General) {
-  IdCache foo;
+TEST(IdMap, General) {
+  IdMap foo;
 
   EXPECT_THAT(foo.Add("air"), Eq(0));
   EXPECT_THAT(foo.Add("foo"), Eq(1));

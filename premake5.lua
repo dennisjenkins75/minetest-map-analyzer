@@ -150,14 +150,14 @@ project "database_lib"
 
     filter {}  -- reset filter
 
-project "idcache_lib"
+project "idmap_lib"
     hide_project_makefile()
     cpp_library()
     files {
-        "src/lib/id_cache/**.cc",
+        "src/lib/id_map/**.cc",
     }
     removefiles {
-        "src/lib/id_cache/**_test.cc",
+        "src/lib/id_map/**_test.cc",
     }
     filter {"action:gmake or action:gmake2"}
         enablewarnings{"all"}
@@ -197,7 +197,7 @@ project "unit_tests"
        "src/**_test.cc",
     }
     systemversion "latest"
-    links { "database_lib", "idcache_lib", "map_reader_lib", "absl_strings" }
+    links { "database_lib", "idmap_lib", "map_reader_lib", "absl_strings" }
     include_gtest()
     include_spdlog()
     include_sqlite()
@@ -228,7 +228,7 @@ project "map_analyzer"
     include_spdlog()
     include_sqlite()
     systemversion "latest"
-    links { "database_lib", "idcache_lib", "map_reader_lib", "absl_strings", "schema_lib" }
+    links { "database_lib", "idmap_lib", "map_reader_lib", "absl_strings", "schema_lib" }
 
     filter { "system:linux" }
         links { "pthread", "z" }

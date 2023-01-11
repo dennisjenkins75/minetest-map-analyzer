@@ -10,17 +10,17 @@
 
 // Bidirectional string/id mapper meant to be shared between threads.
 // However, it is expensive to use, so its better to have each thread
-// use the `ThreadLocalIdCache` (below), to cache entries in `IdCache`.
-class IdCache {
+// use the `ThreadLocalIdMap` (below), to cache entries in `IdMap`.
+class IdMap {
 public:
   static constexpr size_t kReservedSize = 65536;
 
-  IdCache() : by_id_(), by_string_(), mutex_() {
+  IdMap() : by_id_(), by_string_(), mutex_() {
     by_id_.reserve(kReservedSize);
     by_string_.reserve(kReservedSize);
   }
 
-  ~IdCache() {}
+  ~IdMap() {}
 
   void Load(SqliteDb &db, const std::string_view &table_name);
 
@@ -63,12 +63,12 @@ private:
 
 // Caches successful lookups in local storage.
 // Intended that each thread has its own instance.
-class ThreadLocalIdCache {
+class ThreadLocalIdMap {
 public:
-  ThreadLocalIdCache() = delete;
-  ThreadLocalIdCache(IdCache &shared_cache)
+  ThreadLocalIdMap() = delete;
+  ThreadLocalIdMap(IdMap &shared_cache)
       : shared_cache_(shared_cache), by_string_() {
-    by_string_.reserve(IdCache::kReservedSize);
+    by_string_.reserve(IdMap::kReservedSize);
   }
 
   int Add(const std::string &key) {
@@ -83,6 +83,6 @@ public:
   }
 
 private:
-  IdCache &shared_cache_;
+  IdMap &shared_cache_;
   std::unordered_map<std::string, int> by_string_;
 };

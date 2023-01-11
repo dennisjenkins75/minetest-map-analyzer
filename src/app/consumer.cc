@@ -16,7 +16,7 @@ void App::RunConsumer() {
   spdlog::trace("Consumer entry");
   std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
 
-  ThreadLocalIdCache node_id_cache(node_ids_);
+  ThreadLocalIdMap node_id_cache(node_ids_);
 
   while (true) {
     const MapBlockKey key = map_block_queue_.Pop();
