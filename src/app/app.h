@@ -36,4 +36,8 @@ private:
 
   // Run with worker threads.
   void RunThreaded();
+
+  // Preregisteres some super common nodes so that they are first in the
+  // node_ids_ map.
+  void PreregisterContentIds();
 };

@@ -1,4 +1,5 @@
 #include <chrono>
+#include <list>
 #include <spdlog/spdlog.h>
 #include <thread>
 #include <vector>
@@ -35,6 +36,8 @@ void App::RunThreaded() {
 void App::Run() {
   VerifySchema(config_.data_filename);
 
+  PreregisterContentIds();
+
   const auto t0 = std::chrono::steady_clock::now();
   if (config_.threads) {
     RunThreaded();
@@ -45,9 +48,17 @@ void App::Run() {
 
   const std::chrono::duration<double> diff = t1 - t0;
   const double rate = stats_.TotalBlocks() / diff.count();
-  spdlog::info("Processed {0} blocks in {1:.2f} seconds.  {2:.2f} blocks/sec.",
-               stats_.TotalBlocks(), diff.count(), rate);
+  spdlog::info("Processed {0} blocks in {1:.2f} seconds via {2} threads for "
+               "{3:.2f} blocks/sec, {4:.2f} blocks/sec/thread.",
+               stats_.TotalBlocks(), diff.count(), config_.threads, rate,
+               rate / config_.threads);
   spdlog::info("Unique nodes: {0}", node_ids_.size());
 
-  stats_.DumpToFile();
+  stats_.DumpToFile(node_ids_);
+}
+
+// TODO: Read these from a text file.
+void App::PreregisterContentIds() {
+  node_ids_.Add("ignore"); // 0
+  node_ids_.Add("air");    // 1
 }
