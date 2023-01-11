@@ -12,13 +12,22 @@
 #include "src/lib/map_reader/pos.h"
 #include "src/lib/map_reader/utils.h"
 
+// Flush stats every this many blocks.
+static constexpr size_t kStatsBlockFlushLimit = 256;
+
 void App::RunConsumer() {
   spdlog::trace("Consumer entry");
   std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
 
   ThreadLocalIdMap node_id_cache(node_ids_);
+  auto local_stats = std::make_unique<StatsData>();
 
   while (true) {
+    if (local_stats->total_map_blocks_ > kStatsBlockFlushLimit) {
+      stats_.EnqueueStatsData(std::move(local_stats));
+      local_stats = std::make_unique<StatsData>();
+    }
+
     const MapBlockKey key = map_block_queue_.Pop();
     if (key.isTombstone()) {
       spdlog::debug("Tombstone");
@@ -34,22 +43,22 @@ void App::RunConsumer() {
     BlobReader blob(raw_data.value());
     MapBlock mb;
 
-    stats_.IncrTotalBlocks();
+    local_stats->total_map_blocks_++;
 
     if (!mb.deserialize(blob, key.pos, node_id_cache)) {
-      stats_.IncrBadBlocks();
+      local_stats->bad_map_blocks_++;
       spdlog::error("Failed to deserialize mapblock {0} {1}", pos.str(),
                     key.pos);
       continue;
     }
 
-    stats_.IncrByVersion(mb.version());
+    local_stats->by_version_[mb.version()]++;
 
     for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
       const Node &node = mb.nodes()[i];
       const std::string &name = node_id_cache.Get(node.param0());
 
-      //      stats_.IncrNodeByType(name);
+      local_stats->by_type_.at(node.param0())++;
 
       // TODO: Determine if inventory has anything in it, and if yes,
       // write the node to the output database.
@@ -66,6 +75,8 @@ void App::RunConsumer() {
       }
     }
   }
+
+  stats_.EnqueueStatsData(std::move(local_stats));
 
   spdlog::trace("Consumer exit");
 }

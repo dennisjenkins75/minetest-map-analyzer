@@ -14,10 +14,14 @@ App::App(Config &config)
 void App::RunSerially() {
   RunProducer();
   RunConsumer();
+  stats_.SetTombstone();
+  stats_.StatsMergeThread();
 }
 
 void App::RunThreaded() {
   std::thread producer_thread(&App::RunProducer, this);
+
+  std::thread stats_merge_thread(&Stats::StatsMergeThread, &stats_);
 
   std::vector<std::thread> consumer_threads;
   consumer_threads.reserve(config_.threads);
@@ -31,6 +35,8 @@ void App::RunThreaded() {
   for (auto &t : consumer_threads) {
     t.join();
   }
+  stats_.SetTombstone();
+  stats_merge_thread.join();
 }
 
 void App::Run() {
