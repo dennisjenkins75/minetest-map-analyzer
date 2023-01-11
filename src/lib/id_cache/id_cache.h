@@ -8,11 +8,16 @@
 
 #include "src/lib/database/db-sqlite3.h"
 
+// Bidirectional string/id mapper meant to be shared between threads.
+// However, it is expensive to use, so its better to have each thread
+// use the `ThreadLocalIdCache` (below), to cache entries in `IdCache`.
 class IdCache {
 public:
+  static constexpr size_t kReservedSize = 65536;
+
   IdCache() : by_id_(), by_string_(), mutex_() {
-    by_id_.reserve(65536);
-    by_string_.reserve(65536);
+    by_id_.reserve(kReservedSize);
+    by_string_.reserve(kReservedSize);
   }
 
   ~IdCache() {}
@@ -42,6 +47,11 @@ public:
     return by_id_.at(id);
   }
 
+  size_t size() const {
+    std::unique_lock<std::mutex> lock(mutex_);
+    return by_id_.size();
+  }
+
 private:
   // Always sequential, starts at 0.
   std::vector<std::string> by_id_;
@@ -49,4 +59,30 @@ private:
   std::unordered_map<std::string, int> by_string_;
 
   mutable std::mutex mutex_;
+};
+
+// Caches successful lookups in local storage.
+// Intended that each thread has its own instance.
+class ThreadLocalIdCache {
+public:
+  ThreadLocalIdCache() = delete;
+  ThreadLocalIdCache(IdCache &shared_cache)
+      : shared_cache_(shared_cache), by_string_() {
+    by_string_.reserve(IdCache::kReservedSize);
+  }
+
+  int Add(const std::string &key) {
+    auto iter = by_string_.find(key);
+    if (iter != by_string_.end()) {
+      return iter->second;
+    }
+
+    int id = shared_cache_.Add(key);
+    by_string_[key] = id;
+    return id;
+  }
+
+private:
+  IdCache &shared_cache_;
+  std::unordered_map<std::string, int> by_string_;
 };

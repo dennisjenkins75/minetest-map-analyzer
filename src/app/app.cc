@@ -47,6 +47,7 @@ void App::Run() {
   const double rate = stats_.TotalBlocks() / diff.count();
   spdlog::info("Processed {0} blocks in {1:.2f} seconds.  {2:.2f} blocks/sec.",
                stats_.TotalBlocks(), diff.count(), rate);
+  spdlog::info("Unique nodes: {0}", node_ids_.size());
 
   stats_.DumpToFile();
 }

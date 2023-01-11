@@ -16,6 +16,8 @@ void App::RunConsumer() {
   spdlog::trace("Consumer entry");
   std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
 
+  ThreadLocalIdCache node_id_cache(node_ids_);
+
   while (true) {
     const MapBlockKey key = map_block_queue_.Pop();
     if (key.isTombstone()) {
@@ -33,7 +35,6 @@ void App::RunConsumer() {
     MapBlock mb;
 
     stats_.IncrTotalBlocks();
-    stats_.IncrByVersion(mb.version());
 
     if (!mb.deserialize(blob, key.pos)) {
       stats_.IncrBadBlocks();
@@ -42,11 +43,14 @@ void App::RunConsumer() {
       continue;
     }
 
+    stats_.IncrByVersion(mb.version());
+
     for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
       const Node &node = mb.nodes()[i];
       const std::string &name = mb.name_for_id(node.param0());
 
-      stats_.IncrNodeByType(name);
+      //      stats_.IncrNodeByType(name);
+      const int64_t node_id = node_id_cache.Add(name);
 
       // TODO: Determine if inventory has anything in it, and if yes,
       // write the node to the output database.
