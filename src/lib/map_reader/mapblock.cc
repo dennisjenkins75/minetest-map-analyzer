@@ -9,9 +9,10 @@
 MapBlock::MapBlock()
     : valid_(false), version_(0), flags_(0), lighting_complete_(0),
       timestamp_(0), num_name_id_mappings_(0), content_width_(0),
-      params_width_(0), nodes_() {}
+      params_width_(0), nodes_(), param0_map_() {}
 
-bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id) {
+bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
+                           ThreadLocalIdMap &id_map) {
   // u8 version
   if (!blob.read_u8(&version_, "version")) {
     return false;
@@ -33,7 +34,7 @@ bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id) {
       return false;
     }
 
-    if (!deserialize_name_id_mapping(blob)) {
+    if (!deserialize_name_id_mapping(blob, id_map)) {
       return false;
     }
   }
@@ -69,12 +70,16 @@ bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id) {
       return false;
     }
 
-    if (!deserialize_name_id_mapping(blob)) {
+    if (!deserialize_name_id_mapping(blob, id_map)) {
       return false;
     }
   }
 
   if (!deserialize_node_timers(blob)) {
+    return false;
+  }
+
+  if (!remap_param0()) {
     return false;
   }
 
@@ -168,7 +173,8 @@ bool MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
   return true;
 }
 
-bool MapBlock::deserialize_name_id_mapping(BlobReader &blob) {
+bool MapBlock::deserialize_name_id_mapping(BlobReader &blob,
+                                           ThreadLocalIdMap &id_map) {
   if (DEBUG) {
     std::cout << CYAN << "deserialize_name_id_mapping:\n" << CLEAR;
     const size_t len = std::min(static_cast<size_t>(128), blob.remaining());
@@ -188,7 +194,7 @@ bool MapBlock::deserialize_name_id_mapping(BlobReader &blob) {
     return false;
   }
 
-  name_id_mapping_.resize(nim_count, "");
+  param0_map_.resize(nim_count, -1);
 
   for (; nim_count > 0; --nim_count) {
     uint16_t id = 0;
@@ -209,11 +215,11 @@ bool MapBlock::deserialize_name_id_mapping(BlobReader &blob) {
       return false;
     }
 
-    if (id > name_id_mapping_.size()) {
-      name_id_mapping_.resize(id, "");
+    if (id > param0_map_.size()) {
+      param0_map_.resize(id, -1);
     }
 
-    name_id_mapping_[id] = name;
+    param0_map_[id] = id_map.Add(name);
   }
 
   return true;
@@ -301,6 +307,14 @@ bool MapBlock::deserialize_node_timers(BlobReader &blob) {
     if (!blob.read_s32(&elapsed, "timer.elapsed")) {
       return false;
     }
+  }
+
+  return true;
+}
+
+bool MapBlock::remap_param0() {
+  for (Node &node : nodes_) {
+    node.param_0 = param0_map_.at(node.param_0);
   }
 
   return true;

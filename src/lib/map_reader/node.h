@@ -1,5 +1,4 @@
-#ifndef _MT_MAP_SEARCH_NODE_H_
-#define _MT_MAP_SEARCH_NODE_H_
+#pragma once
 
 #include <vector>
 
@@ -30,6 +29,7 @@ public:
   std::string get_meta(const std::string &key) const;
 
 private:
+  // NOTE: Upon deserialization, param_0 is remapped to the global node ID.
   uint16_t param_0;
   uint8_t param_1;
   uint8_t param_2;
@@ -44,5 +44,3 @@ private:
   bool deserialize_metadata(BlobReader &blob, uint8_t version,
                             const NodePos &pos);
 };
-
-#endif // _MT_MAP_SEARCH_NODE_H_

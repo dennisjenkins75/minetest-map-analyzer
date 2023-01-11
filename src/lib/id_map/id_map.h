@@ -67,7 +67,8 @@ class ThreadLocalIdMap {
 public:
   ThreadLocalIdMap() = delete;
   ThreadLocalIdMap(IdMap &shared_cache)
-      : shared_cache_(shared_cache), by_string_() {
+      : shared_cache_(shared_cache), by_id_(), by_string_() {
+    by_id_.resize(IdMap::kReservedSize);
     by_string_.reserve(IdMap::kReservedSize);
   }
 
@@ -78,11 +79,25 @@ public:
     }
 
     int id = shared_cache_.Add(key);
+
+    if (id > by_id_.size()) {
+      by_id_.resize(id + 1);
+    }
+    by_id_[id] = key;
     by_string_[key] = id;
     return id;
   }
 
+  const std::string &Get(int id) {
+    const std::string &foo = by_id_.at(id);
+    if (foo.empty()) {
+      return shared_cache_.Get(id);
+    }
+    return foo;
+  }
+
 private:
   IdMap &shared_cache_;
+  std::vector<std::string> by_id_;
   std::unordered_map<std::string, int> by_string_;
 };

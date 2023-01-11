@@ -36,7 +36,7 @@ void App::RunConsumer() {
 
     stats_.IncrTotalBlocks();
 
-    if (!mb.deserialize(blob, key.pos)) {
+    if (!mb.deserialize(blob, key.pos, node_id_cache)) {
       stats_.IncrBadBlocks();
       spdlog::error("Failed to deserialize mapblock {0} {1}", pos.str(),
                     key.pos);
@@ -47,10 +47,9 @@ void App::RunConsumer() {
 
     for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
       const Node &node = mb.nodes()[i];
-      const std::string &name = mb.name_for_id(node.param0());
+      const std::string &name = node_id_cache.Get(node.param0());
 
       //      stats_.IncrNodeByType(name);
-      const int64_t node_id = node_id_cache.Add(name);
 
       // TODO: Determine if inventory has anything in it, and if yes,
       // write the node to the output database.

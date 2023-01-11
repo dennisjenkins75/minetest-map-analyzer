@@ -2,13 +2,14 @@
 
 // https://github.com/minetest/minetest/blob/master/doc/world_format.txt
 
-#ifndef _MT_MAP_SEARCH_MAPBLOCK_H_
-#define _MT_MAP_SEARCH_MAPBLOCK_H_
+#pragma once
 
 #include <string>
 #include <vector>
 
-#include "blob_reader.h"
+#include "src/lib/id_map/id_map.h"
+#include "src/lib/map_reader/blob_reader.h"
+
 class Node;
 
 class MapBlock {
@@ -26,20 +27,11 @@ public:
   MapBlock();
 
   // TODO: Change 2nd arg to 'const MapBlockPos &pos'.
-  bool deserialize(BlobReader &blob, int64_t pos_id);
+  bool deserialize(BlobReader &blob, int64_t pos_id, ThreadLocalIdMap &id_map);
 
   uint8_t version() { return version_; }
 
   const std::vector<Node> &nodes() const { return nodes_; }
-
-  const std::string &name_for_id(uint16_t id) const {
-    static const std::string _unknown("unknown");
-
-    if (id > name_id_mapping_.size()) {
-      return _unknown;
-    }
-    return name_id_mapping_[id];
-  }
 
 private:
   // Overall, was the deserialiation 100% successful?
@@ -58,8 +50,9 @@ private:
   // Index = p.Z*MAP_BLOCKSIZE*MAP_BLOCKSIZE + p.Y*MAP_BLOCKSIZE + p.X
   std::vector<Node> nodes_;
 
-  // Maps IDs (param0) to names.
-  std::vector<std::string> name_id_mapping_;
+  // Maps param0 to global node_id (from ThreadLocalIdMap).
+  // Index is param0, Value is global node id.
+  std::vector<int> param0_map_;
 
   bool deserialize_nodes(BlobReader &blob);
 
@@ -67,11 +60,11 @@ private:
   // TODO: Change 2nd arg to 'const MapBlockPos &pos'.
   bool deserialize_metadata(BlobReader &blob, int64_t pos_id);
 
-  bool deserialize_name_id_mapping(BlobReader &blob);
+  bool deserialize_name_id_mapping(BlobReader &blob, ThreadLocalIdMap &id_map);
 
   bool deserialize_static_objects(BlobReader &blob);
 
   bool deserialize_node_timers(BlobReader &blob);
-};
 
-#endif // _MT_MAP_SEARCH_MAPBLOCK_H_
+  bool remap_param0();
+};
