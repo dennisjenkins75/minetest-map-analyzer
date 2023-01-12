@@ -81,3 +81,13 @@ std::string Node::get_meta(const std::string &key) const {
 
   return "";
 }
+
+std::string Node::get_meta_owner() const {
+  for (const auto &meta : metadata_) {
+    if ((meta.key == "owner") || (meta.key == "_owner")) {
+      return meta.value;
+    }
+  }
+
+  return "";
+}

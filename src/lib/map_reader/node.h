@@ -28,6 +28,10 @@ public:
   const Inventory &inventory() const { return inventory_; }
   std::string get_meta(const std::string &key) const;
 
+  // Attempts to determine the "owner" via the metadata.  Most nodes use
+  // "owner", but `bones:bones` use "_owner".
+  std::string get_meta_owner() const;
+
 private:
   // NOTE: Upon deserialization, param_0 is remapped to the global node ID.
   uint16_t param_0;
