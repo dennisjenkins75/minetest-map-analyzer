@@ -50,8 +50,9 @@ public:
   }
 
   // Atomically returns pairs of all dirty items, and clears the dirty flag.
-  std::vector<std::pair<size_t, std::string>> GetDirty() {
-    std::vector<std::pair<size_t, std::string>> ret;
+  using DirtyList = std::vector<std::pair<size_t, std::string>>;
+  DirtyList GetDirty() {
+    DirtyList ret;
     std::unique_lock<std::mutex> lock(mutex_);
     ret.reserve(dirty_.size());
     while (!dirty_.empty()) {

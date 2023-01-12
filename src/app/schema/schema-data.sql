@@ -2,8 +2,7 @@
 
 create table `actor` (
   actor_id integer primary key autoincrement,
-  name text,
-  last_login timestamp not null      -- Comes from 'auth' database.
+  name text
 );
 
 create table `node` (

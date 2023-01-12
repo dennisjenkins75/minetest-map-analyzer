@@ -3,6 +3,7 @@
 #pragma once
 
 #include "src/app/config.h"
+#include "src/app/data_writer.h"
 #include "src/app/mapblock_queue.h"
 #include "src/app/stats.h"
 #include "src/lib/id_map/id_map.h"
@@ -11,7 +12,8 @@ class App {
 public:
   App() = delete;
   App(const Config &config)
-      : config_(config), actor_ids_(), node_ids_(), map_block_queue_(),
+      : config_(config), actor_ids_(), node_ids_(),
+        data_writer_(config, node_ids_, actor_ids_), map_block_queue_(),
         stats_() {}
   ~App() {}
 
@@ -21,6 +23,7 @@ private:
   const Config config_;
   IdMap actor_ids_;
   IdMap node_ids_;
+  DataWriter data_writer_;
   MapBlockQueue map_block_queue_;
   Stats stats_;
 

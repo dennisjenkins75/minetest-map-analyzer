@@ -20,6 +20,8 @@ void App::RunConsumer() {
   std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
 
   ThreadLocalIdMap node_id_cache(node_ids_);
+  ThreadLocalIdMap actor_id_cache(actor_ids_);
+
   auto local_stats = std::make_unique<StatsData>();
 
   while (true) {
@@ -71,6 +73,7 @@ void App::RunConsumer() {
 
       if (name == "bones:bones") {
         const std::string owner = node.get_meta("_owner");
+        actor_id_cache.Add(owner);
         std::cout << "bones: " << NodePos(pos, i).str() << " " << owner << "\n";
       }
     }

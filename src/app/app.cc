@@ -5,13 +5,17 @@
 #include <vector>
 
 #include "src/app/app.h"
-#include "src/app/schema/schema.h"
 
 void App::RunSerially() {
-  RunProducer();
-  RunConsumer();
-  stats_.SetTombstone();
-  stats_.StatsMergeThread();
+  try {
+    RunProducer();
+    RunConsumer();
+    data_writer_.FlushIdMaps();
+    stats_.SetTombstone();
+    stats_.StatsMergeThread();
+  } catch (const Sqlite3Error &err) {
+    spdlog::error("Sqlite3Error: {0}", err.what());
+  }
 }
 
 void App::RunThreaded() {
@@ -31,13 +35,14 @@ void App::RunThreaded() {
   for (auto &t : consumer_threads) {
     t.join();
   }
+
+  data_writer_.FlushIdMaps();
+
   stats_.SetTombstone();
   stats_merge_thread.join();
 }
 
 void App::Run() {
-  VerifySchema(config_.data_filename);
-
   PreregisterContentIds();
 
   const auto t0 = std::chrono::steady_clock::now();
