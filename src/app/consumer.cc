@@ -59,8 +59,12 @@ void App::RunConsumer() {
     for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
       const Node &node = mb.nodes()[i];
       const std::string &name = node_id_cache.Get(node.param0());
+      const std::string &owner = node.get_meta_owner();
 
       local_stats->by_type_.at(node.param0())++;
+      if (!owner.empty()) {
+        actor_id_cache.Add(owner);
+      }
 
       // TODO: Determine if inventory has anything in it, and if yes,
       // write the node to the output database.
@@ -72,8 +76,6 @@ void App::RunConsumer() {
       }
 
       if (name == "bones:bones") {
-        const std::string owner = node.get_meta("_owner");
-        actor_id_cache.Add(owner);
         std::cout << "bones: " << NodePos(pos, i).str() << " " << owner << "\n";
       }
     }
