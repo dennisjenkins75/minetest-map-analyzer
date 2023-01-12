@@ -7,10 +7,6 @@
 #include "src/app/app.h"
 #include "src/app/schema/schema.h"
 
-App::App(Config &config)
-    : config_(config), actor_ids_(), node_ids_(), map_block_queue_(), stats_() {
-}
-
 void App::RunSerially() {
   RunProducer();
   RunConsumer();
@@ -59,6 +55,7 @@ void App::Run() {
                stats_.TotalBlocks(), diff.count(), config_.threads, rate,
                rate / config_.threads);
   spdlog::info("Unique nodes: {0}", node_ids_.size());
+  spdlog::info("Unique actors: {0}", actor_ids_.size());
 
   stats_.DumpToFile(node_ids_);
 }

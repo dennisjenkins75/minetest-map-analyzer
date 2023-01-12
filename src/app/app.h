@@ -10,13 +10,15 @@
 class App {
 public:
   App() = delete;
-  App(Config &config);
+  App(const Config &config)
+      : config_(config), actor_ids_(), node_ids_(), map_block_queue_(),
+        stats_() {}
   ~App() {}
 
   void Run();
 
 private:
-  Config config_;
+  const Config config_;
   IdMap actor_ids_;
   IdMap node_ids_;
   MapBlockQueue map_block_queue_;
