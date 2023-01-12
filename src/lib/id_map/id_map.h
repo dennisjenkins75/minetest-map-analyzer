@@ -3,6 +3,7 @@
 #pragma once
 
 #include <mutex>
+#include <queue>
 #include <string>
 #include <unordered_map>
 
@@ -27,24 +28,38 @@ public:
   void Save(SqliteDb &db, const std::string_view &table_name);
 
   // Returns value, adds to cache if needed.
-  int Add(const std::string &key) {
+  size_t Add(const std::string &key) {
     // TODO: Use a reader/writer lock.
     std::unique_lock<std::mutex> lock(mutex_);
 
-    auto iter = by_string_.find(key);
+    const auto iter = by_string_.find(key);
     if (iter != by_string_.end()) {
       return iter->second;
     }
 
-    int rv = by_id_.size();
+    const size_t rv = by_id_.size();
     by_id_.push_back(key);
     by_string_[key] = rv;
+    dirty_.push(rv);
     return rv;
   }
 
-  const std::string &Get(int id) const {
+  const std::string &Get(size_t id) const {
     std::unique_lock<std::mutex> lock(mutex_);
     return by_id_.at(id);
+  }
+
+  // Atomically returns pairs of all dirty items, and clears the dirty flag.
+  std::vector<std::pair<size_t, std::string>> GetDirty() {
+    std::vector<std::pair<size_t, std::string>> ret;
+    std::unique_lock<std::mutex> lock(mutex_);
+    ret.reserve(dirty_.size());
+    while (!dirty_.empty()) {
+      size_t id = dirty_.front();
+      ret.emplace_back(id, by_id_.at(id));
+      dirty_.pop();
+    }
+    return ret;
   }
 
   size_t size() const {
@@ -56,7 +71,11 @@ private:
   // Always sequential, starts at 0.
   std::vector<std::string> by_id_;
 
-  std::unordered_map<std::string, int> by_string_;
+  std::unordered_map<std::string, size_t> by_string_;
+
+  // Freshly added items are considered "dirty" until they ar flushe to
+  // storage (sqlite table).
+  std::queue<size_t> dirty_;
 
   mutable std::mutex mutex_;
 };
@@ -72,13 +91,13 @@ public:
     by_string_.reserve(IdMap::kReservedSize);
   }
 
-  int Add(const std::string &key) {
-    auto iter = by_string_.find(key);
+  size_t Add(const std::string &key) {
+    const auto iter = by_string_.find(key);
     if (iter != by_string_.end()) {
       return iter->second;
     }
 
-    int id = shared_cache_.Add(key);
+    const size_t id = shared_cache_.Add(key);
 
     if (id > by_id_.size()) {
       by_id_.resize(id + 1);
@@ -88,7 +107,7 @@ public:
     return id;
   }
 
-  const std::string &Get(int id) {
+  const std::string &Get(size_t id) {
     const std::string &foo = by_id_.at(id);
     if (foo.empty()) {
       return shared_cache_.Get(id);
@@ -99,5 +118,5 @@ public:
 private:
   IdMap &shared_cache_;
   std::vector<std::string> by_id_;
-  std::unordered_map<std::string, int> by_string_;
+  std::unordered_map<std::string, size_t> by_string_;
 };
