@@ -21,15 +21,12 @@ function include_spdlog()
     links { "lib_spdlog", "fmt" }
 end
 
--- TODO: Fix problem with linking our vendor/sqlite...
--- Using system sqlite3 for now.
 function include_sqlite()
     includedirs {
---        "vendor/sqlite",
+        "vendor/sqlite",
     }
 
---    links { "lib_sqlite" }
-    links { "sqlite3" }
+    links { "lib_sqlite" }
 end
 
 function cpp_library()
@@ -125,6 +122,7 @@ project "lib_sqlite"
 project "map_reader_lib"
     hide_project_makefile()
     cpp_library()
+    include_sqlite()
     files {
         "src/lib/map_reader/**.cc",
     }
@@ -140,6 +138,7 @@ project "database_lib"
     hide_project_makefile()
     cpp_library()
     include_spdlog()
+    include_sqlite()
     files {
         "src/lib/database/**.cc",
     }
@@ -170,6 +169,7 @@ project "schema_lib"
     hide_project_makefile()
     cpp_library()
     include_spdlog()
+    include_sqlite()
 
     files { "src/app/schema/**.sql", "src/app/schema/**.cc" }
 
