@@ -11,6 +11,7 @@ void App::RunSerially() {
     RunProducer();
     RunConsumer();
     data_writer_.FlushIdMaps();
+    data_writer_.FlushNodeQueue();
     stats_.SetTombstone();
     stats_.StatsMergeThread();
   } catch (const Sqlite3Error &err) {
@@ -37,6 +38,7 @@ void App::RunThreaded() {
   }
 
   data_writer_.FlushIdMaps();
+  data_writer_.FlushNodeQueue();
 
   stats_.SetTombstone();
   stats_merge_thread.join();

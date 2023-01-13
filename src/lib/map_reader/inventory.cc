@@ -92,7 +92,7 @@ static const std::regex re_minegeld("currency:minegeld(_)?(\\d+)?( \\d+)?");
 uint64_t InventoryList::total_minegeld() const {
   uint64_t total = 0;
 
-  for (const auto &item_str : list_) {
+  for (const auto &item_str : items_) {
     std::smatch sm;
     if (std::regex_match(item_str, sm, re_minegeld)) {
       if (sm.size() == 4) {

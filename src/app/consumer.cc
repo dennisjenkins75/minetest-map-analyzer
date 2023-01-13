@@ -55,6 +55,8 @@ void App::RunConsumer() {
     }
 
     local_stats->by_version_[mb.version()]++;
+    std::vector<std::unique_ptr<DataWriterNode>> node_queue;
+    node_queue.reserve(256);
 
     for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
       const Node &node = mb.nodes()[i];
@@ -62,22 +64,33 @@ void App::RunConsumer() {
       const std::string &owner = node.get_meta_owner();
 
       local_stats->by_type_.at(node.param0())++;
-      if (!owner.empty()) {
-        actor_id_cache.Add(owner);
-      }
+      const uint64_t owner_id = owner.empty() ? -1 : actor_id_cache.Add(owner);
 
-      // TODO: Determine if inventory has anything in it, and if yes,
-      // write the node to the output database.
-
-      uint64_t minegeld = node.inventory().total_minegeld();
+      const uint64_t minegeld = node.inventory().total_minegeld();
       if (minegeld > 0) {
         std::cout << "minegeld: " << std::setw(12) << minegeld << " "
                   << NodePos(pos, i).str() << " " << name << "\n";
       }
 
-      if (name == "bones:bones") {
+      const bool is_bones = (name == "bones::bones");
+      if (is_bones) {
         std::cout << "bones: " << NodePos(pos, i).str() << " " << owner << "\n";
       }
+
+      if (minegeld || is_bones || owner_id > -1) {
+        auto dwn = std::make_unique<DataWriterNode>();
+        dwn->pos = NodePos(pos, i);
+        dwn->owner_id = owner_id;
+        dwn->node_id = node.param0();
+        dwn->minegeld = minegeld;
+        dwn->inventory = node.inventory(); // deep copy.
+
+        node_queue.push_back(std::move(dwn));
+      }
+    }
+
+    if (!node_queue.empty()) {
+      data_writer_.EnqueueNodes(std::move(node_queue));
     }
   }
 
