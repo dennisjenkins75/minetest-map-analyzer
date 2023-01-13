@@ -71,4 +71,7 @@ void App::Run() {
 void App::PreregisterContentIds() {
   node_ids_.Add("ignore"); // 0
   node_ids_.Add("air");    // 1
+
+  // We use "owner 0" to mean "no owner" (not null in database).
+  actor_ids_.Add(""); // 0
 }

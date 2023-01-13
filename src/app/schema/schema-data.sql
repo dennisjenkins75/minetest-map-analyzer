@@ -1,12 +1,12 @@
 -- Contains schema of database that our tool WRITES to.
 
 create table `actor` (
-  actor_id integer primary key autoincrement,
+  actor_id integer primary key,
   name text
 );
 
 create table `node` (
-  node_id integer primary key autoincrement,
+  node_id integer primary key,
   name text
 );
 
@@ -20,7 +20,8 @@ create table `nodes` (
   node_z integer not null,
 
   -- Who owns it (meta.owner -> `actor` table), if known.
-  owner_id integer,
+  -- owner_id 0 means "no owner" (must have entry in `actor` table).
+  owner_id integer not null,
 
   -- What type it is (`node` table).
   node_id integer not null,

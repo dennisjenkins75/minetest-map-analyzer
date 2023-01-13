@@ -61,10 +61,10 @@ void App::RunConsumer() {
     for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
       const Node &node = mb.nodes()[i];
       const std::string &name = node_id_cache.Get(node.param0());
-      const std::string &owner = node.get_meta_owner();
+      const std::string &owner = node.get_owner();
 
       local_stats->by_type_.at(node.param0())++;
-      const uint64_t owner_id = owner.empty() ? -1 : actor_id_cache.Add(owner);
+      const uint64_t owner_id = owner.empty() ? 0 : actor_id_cache.Add(owner);
 
       const uint64_t minegeld = node.inventory().total_minegeld();
       if (minegeld > 0) {
@@ -77,7 +77,7 @@ void App::RunConsumer() {
         std::cout << "bones: " << NodePos(pos, i).str() << " " << owner << "\n";
       }
 
-      if (minegeld || is_bones || owner_id > -1) {
+      if (minegeld || is_bones || (owner_id > -0)) {
         auto dwn = std::make_unique<DataWriterNode>();
         dwn->pos = NodePos(pos, i);
         dwn->owner_id = owner_id;

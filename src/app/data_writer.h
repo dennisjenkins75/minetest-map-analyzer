@@ -17,7 +17,7 @@
 // Used by consumer to queue up writes to the `nodes` table in the output
 // database.
 struct DataWriterNode {
-  DataWriterNode() : pos(), owner_id(-1), node_id(0), minegeld(0) {}
+  DataWriterNode() : pos(), owner_id(0), node_id(0), minegeld(0) {}
   NodePos pos;
   size_t owner_id;
   size_t node_id;

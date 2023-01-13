@@ -22,7 +22,7 @@ public:
   size_t size() const { return items_.size(); }
   bool empty() const { return items_.empty(); }
 
-  const std::vector<std::string>& items() const { return items_; }
+  const std::vector<std::string> &items() const { return items_; }
 
 private:
   std::vector<std::string> items_;
@@ -41,7 +41,7 @@ public:
 
   bool empty() const { return lists_.empty(); }
 
-  const std::unordered_map<std::string, InventoryList>& lists() const {
+  const std::unordered_map<std::string, InventoryList> &lists() const {
     return lists_;
   }
 
