@@ -81,6 +81,8 @@ struct MapBlockPos : public Pos<int16_t> {
 
 // Nodes have a range of 16 bits (-32768 to +32767).
 struct NodePos : public Pos<int64_t> {
+  NodePos() : Pos() {}
+
   NodePos(int16_t x, int16_t y, int16_t z) : Pos(x, y, z) {}
 
   // Construct from a "map block pos" (database column), and a relative
@@ -95,6 +97,15 @@ struct NodePos : public Pos<int64_t> {
   // Returns sqlite3 "map.sqlite, blocks.id" value of mapblock that contains
   // this node.
   int64_t MapBlockId() const;
+
+  // Returns our own syntheic 48-bit integer.  As far as I know, this number
+  // has no meaning inside Minetest.  Its just so that we can use a single int64
+  // in our own sqlite database as a key.
+  uint64_t NodePosId() const {
+    return ((static_cast<uint64_t>(x) & 0xffff) << 0) |
+           ((static_cast<uint64_t>(y) & 0xffff) << 16) |
+           ((static_cast<uint64_t>(z) & 0xffff) << 32);
+  }
 
   static NodePos min() { return NodePos(-32768, -32768, -32768); }
   static NodePos max() { return NodePos(32767, 32767, 32767); }

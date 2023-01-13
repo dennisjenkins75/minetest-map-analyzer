@@ -240,3 +240,14 @@ INSTANTIATE_TEST_SUITE_P(RoundTripBlockIdTests, RoundTripBlockIdTest,
                                 32497498001   // max observed in production.
 
                                 ));
+
+// TODO: Convert to parameterized test.
+TEST(NodePos, NodePosId) {
+  EXPECT_THAT(NodePos(0, 0, 0).NodePosId(), Eq(0));
+  EXPECT_THAT(NodePos(1, 0, 0).NodePosId(), Eq(1));
+  EXPECT_THAT(NodePos(0, 1, 0).NodePosId(), Eq(65536));
+  EXPECT_THAT(NodePos(0, 0, 1).NodePosId(), Eq(4294967296));
+  EXPECT_THAT(NodePos(-1, 0, 0).NodePosId(), Eq(0x00000000ffffLU));
+  EXPECT_THAT(NodePos(0, -1, 0).NodePosId(), Eq(0x0000ffff0000LU));
+  EXPECT_THAT(NodePos(0, 0, -1).NodePosId(), Eq(0xffff00000000LU));
+}
