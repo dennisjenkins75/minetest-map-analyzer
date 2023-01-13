@@ -139,6 +139,7 @@ project "map_reader_lib"
 project "database_lib"
     hide_project_makefile()
     cpp_library()
+    include_spdlog()
     files {
         "src/lib/database/**.cc",
     }
@@ -168,6 +169,7 @@ project "idmap_lib"
 project "schema_lib"
     hide_project_makefile()
     cpp_library()
+    include_spdlog()
 
     files { "src/app/schema/**.sql", "src/app/schema/**.cc" }
 
