@@ -40,4 +40,6 @@ $ make -j20 config=release
 
 $ ./bin/Release/map_analyzer --map ./map.sqlite --data ./output.sqlite \
   -t 28 -l 20
+
+$ sqlite3 -column output.sqlite < reports/minegeld-by-player.sql
 ```
