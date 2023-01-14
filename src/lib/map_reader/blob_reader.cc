@@ -8,136 +8,7 @@
 
 static constexpr size_t BUFFER_SIZE = 1024 * 32;
 
-bool BlobReader::size_check(size_t bytes, std::string_view desc) const {
-  if ((_ptr + bytes) <= &(*_blob.end())) {
-    return true;
-  }
-
-  if (DEBUG) {
-    std::cout << RED << "size_check(" << bytes << ") failed for " << desc
-              << CLEAR << "\n";
-  }
-  return false;
-}
-
-bool BlobReader::skip(size_t bytes, std::string_view desc) {
-  if (!size_check(bytes, desc)) {
-    return false;
-  }
-
-  _ptr += bytes;
-  return true;
-}
-
-bool BlobReader::read_s8(int8_t *dest, std::string_view desc) {
-  if (!size_check(sizeof(int8_t), desc)) {
-    return false;
-  }
-
-  *dest = *reinterpret_cast<const int8_t *>(_ptr);
-  _ptr += sizeof(int8_t);
-
-  if (DEBUG) {
-    std::cout << "read_u8(" << desc << ") = " << GREEN << to_hex(dest, 1)
-              << CLEAR << " = " << (*dest + 0) << "\n";
-  }
-
-  return true;
-}
-
-bool BlobReader::read_u8(uint8_t *dest, std::string_view desc) {
-  if (!size_check(sizeof(uint8_t), desc)) {
-    return false;
-  }
-
-  *dest = *_ptr;
-  _ptr += sizeof(uint8_t);
-
-  if (DEBUG) {
-    std::cout << "read_u8(" << desc << ") = " << GREEN << to_hex(dest, 1)
-              << CLEAR << " = " << (*dest + 0) << "\n";
-  }
-
-  return true;
-}
-
-bool BlobReader::read_s16(int16_t *dest, std::string_view desc) {
-  if (!size_check(sizeof(int16_t), desc)) {
-    return false;
-  }
-
-  *dest = ntohs(*reinterpret_cast<const int16_t *>(_ptr));
-  _ptr += sizeof(int16_t);
-
-  if (DEBUG) {
-    std::cout << "read_s16(" << desc << ") = " << GREEN << to_hex(dest, 2)
-              << CLEAR << " = " << (*dest + 0) << "\n";
-  }
-  return true;
-}
-
-bool BlobReader::read_u16(uint16_t *dest, std::string_view desc) {
-  if (!size_check(sizeof(uint16_t), desc)) {
-    return false;
-  }
-
-  *dest = ntohs(*reinterpret_cast<const uint16_t *>(_ptr));
-  _ptr += sizeof(uint16_t);
-
-  if (DEBUG) {
-    std::cout << "read_u16(" << desc << ") = " << GREEN << to_hex(dest, 2)
-              << CLEAR << " = " << (*dest + 0) << "\n";
-  }
-  return true;
-}
-
-bool BlobReader::read_s32(int32_t *dest, std::string_view desc) {
-  if (!size_check(sizeof(int32_t), desc)) {
-    return false;
-  }
-
-  *dest = ntohl(*reinterpret_cast<const int32_t *>(_ptr));
-  _ptr += sizeof(int32_t);
-
-  if (DEBUG) {
-    std::cout << "read_s32(" << desc << ") = " << GREEN << to_hex(dest, 4)
-              << CLEAR << " = " << (*dest + 0) << "\n";
-  }
-  return true;
-}
-
-bool BlobReader::read_u32(uint32_t *dest, std::string_view desc) {
-  if (!size_check(sizeof(uint32_t), desc)) {
-    return false;
-  }
-
-  *dest = ntohl(*reinterpret_cast<const uint32_t *>(_ptr));
-  _ptr += sizeof(uint32_t);
-
-  if (DEBUG) {
-    std::cout << "read_u32(" << desc << ") = " << GREEN << to_hex(dest, 4)
-              << CLEAR << " = " << (*dest + 0) << "\n";
-  }
-  return true;
-}
-
-bool BlobReader::read_str(std::string *dest, uint32_t len,
-                          std::string_view desc) {
-  if (!size_check(len, desc)) {
-    return false;
-  }
-
-  dest->assign(reinterpret_cast<const char *>(_ptr), len);
-  _ptr += len;
-
-  if (DEBUG) {
-    std::cout << "read_str(" << desc << ") = " << GREEN << *dest << CLEAR
-              << "\n";
-  }
-  return true;
-}
-
-bool BlobReader::read_line(std::string *dest, std::string_view desc) {
+bool BlobReader::read_line(std::string *dest, const std::string_view desc) {
   const char *start = reinterpret_cast<const char *>(_ptr);
 
   while (size_check(1, desc)) {
@@ -156,7 +27,7 @@ bool BlobReader::read_line(std::string *dest, std::string_view desc) {
 }
 
 bool BlobReader::decompress_zlib(std::vector<uint8_t> *dest,
-                                 std::string_view desc) {
+                                 const std::string_view desc) {
   z_stream z{};
   int status = 0;
   int ret = 0;
