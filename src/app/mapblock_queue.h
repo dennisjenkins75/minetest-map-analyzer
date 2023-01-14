@@ -10,7 +10,7 @@ struct MapBlockKey {
   int64_t mtime;
 
   MapBlockKey() = delete;
-  MapBlockKey(int64_t pos_, int64_t mtime_): pos(pos_), mtime(mtime_) {}
+  MapBlockKey(int64_t pos_, int64_t mtime_) : pos(pos_), mtime(mtime_) {}
 
   static MapBlockKey MakeTombstone() {
     return MapBlockKey{std::numeric_limits<int64_t>::max(),
