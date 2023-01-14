@@ -57,14 +57,9 @@ create table `blocks` (
   mapblock_y integer not null,
   mapblock_z integer not null,
 
-  -- Count of nodes that were definitely manually placed.
-  artificial integer,
+  -- Content_id for node if block is 100% uniform, 0 otherwise.
+  uniform integer not null,
 
-  -- True if block is 100% 'air', 'vacuum', 'water'.
-  uniform boolean,
-
-  -- True if the block contains any node indicating that it "protected",
-  -- or should not be purged (like a travel net, chest w/ inventory and owner,
-  -- protector ("prot-block"), etc...
-  exempt boolean
+  constraint uniform_id_fk foreign key (uniform) references node (node_id)
+    on delete cascade
 );

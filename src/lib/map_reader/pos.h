@@ -68,6 +68,8 @@ template <typename T> struct Pos {
 
 // Mapblocks have a range of 12 bits (-2048 to +2047).
 struct MapBlockPos : public Pos<int16_t> {
+  MapBlockPos() : Pos() {}
+
   MapBlockPos(int64_t mapblock_id);
 
   MapBlockPos(int16_t x, int16_t y, int16_t z) : Pos(x, y, z) {}

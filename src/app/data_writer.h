@@ -25,6 +25,15 @@ struct DataWriterNode {
   Inventory inventory;
 };
 
+struct DataWriterBlock {
+  DataWriterBlock() : pos(), uniform(0) {}
+  MapBlockPos pos;
+
+  // If the mapblock is 100% the same content_id, then place that here.
+  // 0 otherwise.
+  uint64_t uniform;
+};
+
 class DataWriter {
 public:
   DataWriter() = delete;
@@ -39,9 +48,17 @@ public:
     node_cv_.notify_one();
   }
 
+  void EnqueueBlock(std::unique_ptr<DataWriterBlock> block) {
+    std::unique_lock<std::mutex> lock(block_mutex_);
+    block_queue_.push(std::move(block));
+    block_cv_.notify_one();
+  }
+
   void FlushIdMaps();
 
   void FlushNodeQueue();
+
+  void FlushBlockQueue();
 
   void DataWriterThread();
 
@@ -55,10 +72,15 @@ private:
   std::unique_ptr<SqliteStmt> stmt_node_;
   std::unique_ptr<SqliteStmt> stmt_nodes_;
   std::unique_ptr<SqliteStmt> stmt_inventory_;
+  std::unique_ptr<SqliteStmt> stmt_blocks_;
 
   std::queue<std::unique_ptr<DataWriterNode>> node_queue_;
   mutable std::mutex node_mutex_;
   std::condition_variable node_cv_;
+
+  std::queue<std::unique_ptr<DataWriterBlock>> block_queue_;
+  mutable std::mutex block_mutex_;
+  std::condition_variable block_cv_;
 
   void FlushDirtyIdMap(SqliteStmt *stmt, const IdMap::DirtyList &list);
 };

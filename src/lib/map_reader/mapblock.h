@@ -33,6 +33,8 @@ public:
 
   const std::vector<Node> &nodes() const { return nodes_; }
 
+  size_t unique_content_ids() const { return param0_map_.size(); }
+
 private:
   // Overall, was the deserialiation 100% successful?
   bool valid_;

@@ -12,6 +12,7 @@ void App::RunSerially() {
     RunConsumer();
     data_writer_.FlushIdMaps();
     data_writer_.FlushNodeQueue();
+    data_writer_.FlushBlockQueue();
     stats_.SetTombstone();
     stats_.StatsMergeThread();
   } catch (const Sqlite3Error &err) {
@@ -39,6 +40,7 @@ void App::RunThreaded() {
 
   data_writer_.FlushIdMaps();
   data_writer_.FlushNodeQueue();
+  data_writer_.FlushBlockQueue();
 
   stats_.SetTombstone();
   stats_merge_thread.join();
@@ -69,8 +71,9 @@ void App::Run() {
 
 // TODO: Read these from a text file.
 void App::PreregisterContentIds() {
-  node_ids_.Add("ignore"); // 0
-  node_ids_.Add("air");    // 1
+  node_ids_.Add("");       // 0 (b/c we don't allow null values).
+  node_ids_.Add("ignore"); // 1
+  node_ids_.Add("air");    // 2
 
   // We use "owner 0" to mean "no owner" (not null in database).
   actor_ids_.Add(""); // 0

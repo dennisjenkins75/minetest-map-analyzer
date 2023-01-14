@@ -35,6 +35,8 @@ void App::RunConsumer() {
       spdlog::debug("Tombstone");
       break;
     }
+
+    // TODO: rename `pos` to `mapblock_pos` to reduce ambiguity below.
     const MapBlockPos pos(key.pos);
     std::optional<MapInterface::Blob> raw_data = map->LoadMapBlock(pos);
     if (!raw_data) {
@@ -91,6 +93,14 @@ void App::RunConsumer() {
 
     if (!node_queue.empty()) {
       data_writer_.EnqueueNodes(std::move(node_queue));
+    }
+
+    if (mb.unique_content_ids() == 1) {
+      auto block = std::make_unique<DataWriterBlock>();
+      block->pos = pos;
+      block->uniform = mb.nodes()[0].param0();
+
+      data_writer_.EnqueueBlock(std::move(block));
     }
   }
 
