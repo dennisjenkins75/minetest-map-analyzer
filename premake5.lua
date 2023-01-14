@@ -199,7 +199,7 @@ project "unit_tests"
        "src/**_test.cc",
     }
     systemversion "latest"
-    links { "database_lib", "idmap_lib", "map_reader_lib", "absl_strings" }
+    links { "database_lib", "idmap_lib", "map_reader_lib" }
     include_gtest()
     include_spdlog()
     include_sqlite()
@@ -230,7 +230,7 @@ project "map_analyzer"
     include_spdlog()
     include_sqlite()
     systemversion "latest"
-    links { "database_lib", "idmap_lib", "map_reader_lib", "absl_strings", "schema_lib" }
+    links { "database_lib", "idmap_lib", "map_reader_lib", "schema_lib" }
 
     filter { "system:linux" }
         links { "pthread", "z" }
