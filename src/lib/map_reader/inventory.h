@@ -1,7 +1,6 @@
-#ifndef _MT_MAP_SEARCH_INVENTORY_H_
-#define _MT_MAP_SEARCH_INVENTORY_H_
+#pragma once
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -48,5 +47,3 @@ public:
 private:
   std::unordered_map<std::string, InventoryList> lists_;
 };
-
-#endif // _MT_MAP_SEARCH_INVENTORY_H_
