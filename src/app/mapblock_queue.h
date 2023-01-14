@@ -27,10 +27,14 @@ struct MapBlockKey {
 // 1. Want the youngest mtime, and smallest position to sort to the "top".
 // 2. Want "tombstone" to always sort last.
 static inline bool operator<(const MapBlockKey &a, const MapBlockKey &b) {
+#if 0
   if (a.mtime == b.mtime) {
     return a.pos > b.pos;
   }
   return a.mtime > b.mtime;
+#else
+  return a.pos > b.pos;
+#endif
 }
 
 class MapBlockQueue final {
