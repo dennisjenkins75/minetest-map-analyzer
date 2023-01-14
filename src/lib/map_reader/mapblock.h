@@ -27,7 +27,7 @@ public:
   MapBlock();
 
   // TODO: Change 2nd arg to 'const MapBlockPos &pos'.
-  bool deserialize(BlobReader &blob, int64_t pos_id, ThreadLocalIdMap &id_map);
+  void deserialize(BlobReader &blob, int64_t pos_id, ThreadLocalIdMap &id_map);
 
   uint8_t version() { return version_; }
 
@@ -56,15 +56,14 @@ private:
   // Index is param0, Value is global node id.
   std::vector<int> param0_map_;
 
-  bool deserialize_nodes(BlobReader &blob);
+  void deserialize_nodes(BlobReader &blob);
 
-  // Extracts ALL metadata.
   // TODO: Change 2nd arg to 'const MapBlockPos &pos'.
-  bool deserialize_metadata(BlobReader &blob, int64_t pos_id);
+  void deserialize_metadata(BlobReader &blob, int64_t pos_id);
 
-  bool deserialize_name_id_mapping(BlobReader &blob, ThreadLocalIdMap &id_map);
+  void deserialize_name_id_mapping(BlobReader &blob, ThreadLocalIdMap &id_map);
 
-  bool deserialize_static_objects(BlobReader &blob);
+  void deserialize_static_objects(BlobReader &blob);
 
   void deserialize_node_timers(BlobReader &blob);
 

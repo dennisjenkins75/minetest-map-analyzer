@@ -8,22 +8,41 @@
 
 static constexpr size_t BUFFER_SIZE = 1024 * 32;
 
-bool BlobReader::read_line(std::string *dest, const std::string_view desc) {
+SerializationError::SerializationError(const BlobReader &br,
+                                       const std::string_view desc,
+                                       const std::string_view extra)
+    : Error(desc) {
+  std::stringstream ss;
+  ss << "SerializationError while reading from blob. "
+     << "size: " << br.size() << ", offset: " << br.offset()
+     << ", remaining: " << br.remaining() << ", desc: " << desc;
+  if (!extra.empty()) {
+    ss << ", extra: " << extra;
+  }
+
+  msg_ = ss.str();
+}
+
+std::string BlobReader::read_line(const std::string_view desc) {
   const char *start = reinterpret_cast<const char *>(_ptr);
+  std::string dest;
 
   while ((_ptr + 1) <= &(*_blob.end())) {
     if (isprint(*_ptr)) {
       _ptr++;
       continue;
     } else if (*_ptr == '\n') {
-      dest->assign(start, reinterpret_cast<const char *>(_ptr) - start);
+      dest.assign(start, reinterpret_cast<const char *>(_ptr) - start);
       _ptr++;
-      return true;
+      return dest;
+    } else {
+      throw SerializationError(*this, desc,
+                               "Garbage data found during read_line()");
     }
-    // garbage data?
-    break;
   }
-  return false;
+
+  throw SerializationError(*this, desc,
+                           "End of blob without \\n during read_line()");
 }
 
 std::vector<uint8_t> BlobReader::decompress_zlib(const std::string_view desc) {
@@ -39,7 +58,8 @@ std::vector<uint8_t> BlobReader::decompress_zlib(const std::string_view desc) {
   z.avail_in = 0;
 
   if (inflateInit(&z) != Z_OK) {
-    throw SerializationError("decompress_zlib(), inflateInit() failed.");
+    throw SerializationError(*this, desc,
+                             "decompress_zlib(), inflateInit() failed.");
   }
 
   while (true) {
@@ -68,7 +88,7 @@ std::vector<uint8_t> BlobReader::decompress_zlib(const std::string_view desc) {
     if ((status != Z_STREAM_END) && (status != Z_OK)) {
       std::stringstream ss;
       ss << "zlib error: " << status << ", " << (z.msg ? z.msg : "");
-      throw SerializationError(ss.str());
+      throw SerializationError(*this, desc, ss.str());
     }
 
     // Update input stream pointer.

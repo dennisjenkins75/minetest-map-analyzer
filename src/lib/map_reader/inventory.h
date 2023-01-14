@@ -33,8 +33,8 @@ class Inventory {
 public:
   Inventory() : lists_() {}
 
-  // Returns 'true' if successful, false on error.
-  bool deserialize_inventory(BlobReader &blob);
+  // Throws `SerializationError` on error.
+  void deserialize_inventory(BlobReader &blob);
 
   uint64_t total_minegeld() const;
 

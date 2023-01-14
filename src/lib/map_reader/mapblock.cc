@@ -11,7 +11,7 @@ MapBlock::MapBlock()
       timestamp_(0), num_name_id_mappings_(0), content_width_(0),
       params_width_(0), nodes_(), param0_map_() {}
 
-bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
+void MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
                            ThreadLocalIdMap &id_map) {
   version_ = blob.read_u8("version");
   flags_ = blob.read_u8("flags");
@@ -19,9 +19,7 @@ bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
 
   if (version_ >= 29) {
     timestamp_ = blob.read_u32("timestamp");
-    if (!deserialize_name_id_mapping(blob, id_map)) {
-      return false;
-    }
+    deserialize_name_id_mapping(blob, id_map);
   }
 
   content_width_ = blob.read_u8("content_width");
@@ -31,25 +29,13 @@ bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
   params_width_ = blob.read_u8("params_width");
   assert(params_width_ == 2);
 
-  // node data.
-  if (!deserialize_nodes(blob)) {
-    return false;
-  }
-
-  // node metadata.
-  if (!deserialize_metadata(blob, pos_id)) {
-    return false;
-  }
-
-  if (!deserialize_static_objects(blob)) {
-    return false;
-  }
+  deserialize_nodes(blob);
+  deserialize_metadata(blob, pos_id);
+  deserialize_static_objects(blob);
 
   if (version_ <= 28) {
     timestamp_ = blob.read_u32("timestamp");
-    if (!deserialize_name_id_mapping(blob, id_map)) {
-      return false;
-    }
+    deserialize_name_id_mapping(blob, id_map);
   }
 
   deserialize_node_timers(blob);
@@ -58,26 +44,22 @@ bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
   if (blob.remaining()) {
     std::stringstream ss;
     const size_t len = std::min(static_cast<size_t>(128), blob.remaining());
-    ss << "BlobReader has left over data after deserialization.  Remaining "
-          "bytes: "
-       << blob.remaining() << " " << to_hex_block(blob.ptr(), len);
-    throw SerializationError(ss.str());
+    ss << "Left over data after deserialization.  Remaining byte sample: "
+       << to_hex(blob.ptr(), len);
+    throw SerializationError(blob, "MapBlock::deserialize", ss.str());
   }
-
-  return true;
 }
 
-bool MapBlock::deserialize_nodes(BlobReader &blob) {
+void MapBlock::deserialize_nodes(BlobReader &blob) {
   // node data (zlib-compressed if version < 29).
   // We expect 16384 bytes.
   const std::vector<uint8_t> node_buffer = blob.decompress_zlib("nodes");
 
   if (node_buffer.size() != NODE_DATA_SIZE) {
     std::stringstream ss;
-    ss << "MapBlock::deserialize_nodes() decompressed into "
-       << node_buffer.size() << " nodes; expected " << NODE_DATA_SIZE
-       << " instead.";
-    throw SerializationError(ss.str());
+    ss << "Decompressed into " << node_buffer.size() << " nodes; expected "
+       << NODE_DATA_SIZE << " instead.";
+    throw SerializationError(blob, "MapBlock::deserialize_nodes", ss.str());
   }
 
   nodes_.resize(NODES_PER_BLOCK);
@@ -89,21 +71,23 @@ bool MapBlock::deserialize_nodes(BlobReader &blob) {
     nodes_[i].param_1 = node_buffer[PARAM0_SIZE + i];
     nodes_[i].param_2 = node_buffer[PARAM0_SIZE + PARAM1_SIZE + i];
   }
-
-  return true;
 }
 
-bool MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
+void MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
   const std::vector<uint8_t> meta_buffer = blob.decompress_zlib("metadata");
   BlobReader r(meta_buffer);
 
   const uint8_t version = r.read_u8("meta.version");
   if (!version) {
-    return true;
-  } // no metadata
+    // No metadata to deserialize.
+    return;
+  }
+
   if (version != 2) {
-    return false;
-  } // expect version 2.
+    throw SerializationError(blob, "deserialize_metadata",
+                             std::string("Unsupported meta.version value ") +
+                                 std::to_string(version));
+  }
 
   const uint16_t count = r.read_u16("meta.count");
 
@@ -114,15 +98,15 @@ bool MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
     assert(local_pos < NODES_PER_BLOCK);
     nodes_.at(local_pos).deserialize_metadata(r, version, pos);
   }
-
-  return true;
 }
 
-bool MapBlock::deserialize_name_id_mapping(BlobReader &blob,
+void MapBlock::deserialize_name_id_mapping(BlobReader &blob,
                                            ThreadLocalIdMap &id_map) {
   const uint8_t nim_version = blob.read_u8("nim.version");
   if (nim_version != 0) {
-    return false;
+    throw SerializationError(blob, "deserialize_name_id_mapping",
+                             std::string("Unsupported nim.version value ") +
+                                 std::to_string(nim_version));
   }
 
   uint16_t nim_count = blob.read_u16("nim.count");
@@ -132,7 +116,9 @@ bool MapBlock::deserialize_name_id_mapping(BlobReader &blob,
   for (; nim_count > 0; --nim_count) {
     const uint16_t id = blob.read_u16("nim.id");
     if (id >= 4096) {
-      return false;
+      throw SerializationError(blob, "deserialize_name_id_mapping",
+                               std::string("Illegal nim.id value ") +
+                                   std::to_string(id));
     }
 
     const uint16_t name_len = blob.read_u16("nim.name_len");
@@ -145,15 +131,16 @@ bool MapBlock::deserialize_name_id_mapping(BlobReader &blob,
 
     param0_map_[id] = id_map.Add(name);
   }
-
-  return true;
 }
 
 // For now, we don't care about them, so just parse and toss them.
-bool MapBlock::deserialize_static_objects(BlobReader &blob) {
+void MapBlock::deserialize_static_objects(BlobReader &blob) {
   const uint8_t obj_version = blob.read_u8("static_object.version");
   if (obj_version != 0) {
-    return false;
+    throw SerializationError(
+        blob, "deserialize_static_objects",
+        std::string("Unsupported static_object.version value ") +
+            std::to_string(obj_version));
   }
 
   uint16_t obj_count = blob.read_u16("static_object.count");
@@ -170,8 +157,6 @@ bool MapBlock::deserialize_static_objects(BlobReader &blob) {
     // TODO: Actually import static objects.
     blob.skip(data_size, "static_object.data");
   }
-
-  return true;
 }
 
 void MapBlock::deserialize_node_timers(BlobReader &blob) {

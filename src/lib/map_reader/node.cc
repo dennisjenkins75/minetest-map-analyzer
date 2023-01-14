@@ -6,7 +6,7 @@
 #include "src/lib/map_reader/node.h"
 #include "src/lib/map_reader/utils.h"
 
-bool Node::deserialize_metadata(BlobReader &blob, uint8_t version,
+void Node::deserialize_metadata(BlobReader &blob, uint8_t version,
                                 const NodePos &pos) {
   uint32_t num_vars = blob.read_u32("meta.num_vars");
 
@@ -25,18 +25,14 @@ bool Node::deserialize_metadata(BlobReader &blob, uint8_t version,
         std::stringstream ss;
         ss << "Unexpected value for 'meta.private': "
            << to_hex(&var.private_, 1);
-        throw SerializationError(ss.str());
+        throw SerializationError(blob, "Node::deserialize_metadata", ss.str());
       }
     }
 
     metadata_.push_back(std::move(var));
   }
 
-  if (!inventory_.deserialize_inventory(blob)) {
-    return false;
-  }
-
-  return true;
+  inventory_.deserialize_inventory(blob);
 }
 
 std::string Node::get_meta(const std::string &key) const {

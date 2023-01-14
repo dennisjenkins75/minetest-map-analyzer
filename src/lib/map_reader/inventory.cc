@@ -1,4 +1,3 @@
-#include <iostream>
 #include <regex>
 
 #include "blob_reader.h"
@@ -15,22 +14,13 @@ const std::regex re_empty("Empty");
 const std::string end_list = "EndInventoryList";
 const std::string end_inventory = "EndInventory";
 
-bool Inventory::deserialize_inventory(BlobReader &blob) {
-  if (DEBUG) {
-    std::cout << CYAN << "deserialize_inventory:\n" << CLEAR;
-    const size_t len = std::min(static_cast<size_t>(1024), blob.remaining());
-    std::cout << to_hex_block(blob.ptr(), len);
-  }
-
+void Inventory::deserialize_inventory(BlobReader &blob) {
   // Current list that we're building.
   InventoryList current;
   std::string list_name;
 
-  std::string line;
-  while (blob.read_line(&line, "inventory")) {
-    if (DEBUG) {
-      std::cout << GREEN << line << RED << "." << CLEAR << "\n";
-    }
+  while (true) {
+    const std::string line = blob.read_line("inventory");
 
     std::smatch sm;
     if (std::regex_match(line, sm, re_new_list)) {
@@ -53,7 +43,8 @@ bool Inventory::deserialize_inventory(BlobReader &blob) {
 
     if (std::regex_match(line, sm, re_item)) {
       if (list_name.empty()) {
-        return false;
+        // `list_name` should eb filled in BEFORE we find items.
+        throw SerializationError(blob, "inventory", "list_name.empty()");
       }
       current.add(std::move(sm[1]));
       continue;
@@ -61,7 +52,8 @@ bool Inventory::deserialize_inventory(BlobReader &blob) {
 
     if (std::regex_match(line, sm, re_empty)) {
       if (list_name.empty()) {
-        return false;
+        // `list_name` should eb filled in BEFORE we find items.
+        throw SerializationError(blob, "inventory", "list_name.empty()");
       }
       current.add(std::move(sm[1]));
       continue;
@@ -75,14 +67,11 @@ bool Inventory::deserialize_inventory(BlobReader &blob) {
     }
 
     if (line == end_inventory) {
-      return true;
+      break;
     }
 
-    // Junk data?
-    return false;
+    throw SerializationError(blob, "inventory", "Junk string? " + line);
   }
-
-  return false;
 }
 
 // "currency:minegeld_10 46"
@@ -111,8 +100,9 @@ uint64_t InventoryList::total_minegeld() const {
     }
 
     if (item_str.find("currency:minegeld") != std::string::npos) {
-      std::cout << RED << item_str << CLEAR << "\n";
-      exit(-1);
+      // TODO: Not sure what to do here.
+      // Maybe the current mod added a new node sub-type?
+      continue;
     }
   }
 

@@ -12,10 +12,13 @@
 
 #include "src/lib/exceptions/exceptions.h"
 
+class BlobReader;
+
 class SerializationError : public Error {
 public:
   SerializationError() = delete;
-  SerializationError(std::string_view msg) : Error(msg) {}
+  SerializationError(const BlobReader &br, const std::string_view desc,
+                     const std::string_view extra);
 };
 
 class BlobReader {
@@ -40,11 +43,8 @@ public:
     }
 
     std::stringstream ss;
-    ss << "BlobReader size_check(" << bytes << " '" << desc
-       << "') failed.  blob.size: " << size() << ", blob.offset: " << offset()
-       << ", blob.remaining: " << remaining();
-
-    throw SerializationError(ss.str());
+    ss << "size_check(" << bytes << ")";
+    throw SerializationError(*this, desc, ss.str());
   }
 
   // Skips 'bytes' forwards, if doing so won't go beyond end of the blob.
@@ -89,10 +89,9 @@ public:
     return ret;
   }
 
-  // Strips off trailing "\n".
-  // Returns false when there is no data left in the blob.
-  // TODO: Return raw string and use exception to indicate blob overrun.
-  bool read_line(std::string *dest, const std::string_view desc);
+  // Reads chars from from _ptr to '\n', returns string (trimmed).
+  // Throws exception to indicate blob overrun.
+  std::string read_line(const std::string_view desc);
 
   // Assume that `_ptr` points to a zlib compressed block.  Return decompressed
   // data and update this->_ptr to point to the first byte after the zlib

@@ -49,10 +49,13 @@ void App::RunConsumer() {
 
     local_stats->total_map_blocks_++;
 
-    if (!mb.deserialize(blob, key.pos, node_id_cache)) {
+    try {
+      mb.deserialize(blob, key.pos, node_id_cache);
+    } catch (const SerializationError &err) {
+      // TODO: Log these failed blocks and error message to an output table.
       local_stats->bad_map_blocks_++;
-      spdlog::error("Failed to deserialize mapblock {0} {1}", pos.str(),
-                    key.pos);
+      spdlog::error("Failed to deserialize mapblock {0} {1} {2}", pos.str(),
+                    key.pos, err.what());
       continue;
     }
 
