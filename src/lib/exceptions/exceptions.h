@@ -30,12 +30,6 @@ public:
   explicit DatabaseError(std::string_view msg) : Error(msg) {}
 };
 
-class SerializationError : public Error {
-public:
-  SerializationError() = delete;
-  SerializationError(std::string_view api, std::string_view err);
-};
-
 class UnimplementedError : public Error {
 public:
   UnimplementedError() = delete;

@@ -28,46 +28,37 @@ TEST(BlobReader, General) {
   EXPECT_THAT(r.eof(), IsFalse());
   EXPECT_THAT(r, SizeIs(14));
   EXPECT_THAT(r.remaining(), Eq(14));
-  EXPECT_THAT(r.size_check(13, "foo"), IsTrue());
-  EXPECT_THAT(r.size_check(14, "foo"), IsTrue());
-  EXPECT_THAT(r.size_check(15, "foo"), IsFalse());
+
+  // `void size_check()` is silent on success, throws on error.
+  r.size_check(13, "foo"); // no exception thrown.
+  r.size_check(14, "foo"); // no exception thrown.
+  EXPECT_THROW(r.size_check(15, "foo"), SerializationError);
 
   // Begin reading, which will mutate state.
-  uint16_t a = 0;
-  EXPECT_THAT(r.read_u16(&a, "foo"), IsTrue());
-  EXPECT_THAT(a, Eq(0x3a2b));
+  EXPECT_THAT(r.read_u16("u16"), Eq(0x3a2b));
   EXPECT_THAT(r.remaining(), Eq(12));
 
-  uint8_t b = 0;
-  EXPECT_THAT(r.read_u8(&b, "foo"), IsTrue());
-  EXPECT_THAT(b, Eq(255));
+  EXPECT_THAT(r.read_u8("u8"), Eq(255));
   EXPECT_THAT(r.remaining(), Eq(11));
 
-  uint8_t c = 0;
-  EXPECT_THAT(r.read_u8(&c, "foo"), IsTrue());
-  EXPECT_THAT(c, Eq(127));
+  EXPECT_THAT(r.read_u8("u8"), Eq(127));
   EXPECT_THAT(r.remaining(), Eq(10));
 
-  uint32_t d = 0;
-  EXPECT_THAT(r.read_u32(&d, "bigfoo"), IsTrue());
-  EXPECT_THAT(d, Eq(0xdeadbeef));
+  EXPECT_THAT(r.read_u32("u32"), Eq(0xdeadbeef));
   EXPECT_THAT(r.remaining(), Eq(6));
 
-  uint8_t len = 0;
-  EXPECT_THAT(r.read_u8(&len, "strlen"), IsTrue());
+  uint8_t len = r.read_u8("strlen");
   EXPECT_THAT(len, Eq(5));
   EXPECT_THAT(r.remaining(), Eq(5));
 
-  std::string s;
-  EXPECT_THAT(r.read_str(&s, len, "str"), IsTrue());
+  std::string s = r.read_str(len, "str");
   EXPECT_THAT(s, Eq("hello"));
   EXPECT_THAT(r.remaining(), Eq(0));
 
   // We should have reached EOF.
   EXPECT_THAT(r.eof(), IsTrue());
 
-  uint8_t z = 0;
-  EXPECT_THAT(r.read_u8(&z, "eof"), IsFalse());
+  EXPECT_THROW(r.read_u8("past_eof"), SerializationError);
 }
 
 // TODO: Need unit test for `BlobReader::decompress_zlib()`

@@ -66,7 +66,7 @@ private:
 
   bool deserialize_static_objects(BlobReader &blob);
 
-  bool deserialize_node_timers(BlobReader &blob);
+  void deserialize_node_timers(BlobReader &blob);
 
-  bool remap_param0();
+  void remap_param0();
 };

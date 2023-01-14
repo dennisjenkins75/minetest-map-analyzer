@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <cassert>
-#include <iostream>
+#include <sstream>
 
 #include "mapblock.h"
 #include "node.h"
@@ -13,42 +13,22 @@ MapBlock::MapBlock()
 
 bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
                            ThreadLocalIdMap &id_map) {
-  // u8 version
-  if (!blob.read_u8(&version_, "version")) {
-    return false;
-  }
-
-  // u8 flags
-  if (!blob.read_u8(&flags_, "flags")) {
-    return false;
-  }
-
-  // u16 lighting_complete
-  if (!blob.read_u16(&lighting_complete_, "lighting_complete")) {
-    return false;
-  }
+  version_ = blob.read_u8("version");
+  flags_ = blob.read_u8("flags");
+  lighting_complete_ = blob.read_u16("lighting_complete");
 
   if (version_ >= 29) {
-    // u32 timestamp
-    if (!blob.read_u32(&timestamp_, "timestamp")) {
-      return false;
-    }
-
+    timestamp_ = blob.read_u32("timestamp");
     if (!deserialize_name_id_mapping(blob, id_map)) {
       return false;
     }
   }
 
-  // u8 content_width
-  if (!blob.read_u8(&content_width_, "content_width")) {
-    return false;
-  }
+  content_width_ = blob.read_u8("content_width");
+  // TODO: Replace all usage of `assert()` with `SerializationError`.
   assert(content_width_ == 2);
 
-  // u8 params_width
-  if (!blob.read_u8(&params_width_, "params_width")) {
-    return false;
-  }
+  params_width_ = blob.read_u8("params_width");
   assert(params_width_ == 2);
 
   // node data.
@@ -66,51 +46,38 @@ bool MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
   }
 
   if (version_ <= 28) {
-    if (!blob.read_u32(&timestamp_, "timestamp")) {
-      return false;
-    }
-
+    timestamp_ = blob.read_u32("timestamp");
     if (!deserialize_name_id_mapping(blob, id_map)) {
       return false;
     }
   }
 
-  if (!deserialize_node_timers(blob)) {
-    return false;
-  }
-
-  if (!remap_param0()) {
-    return false;
-  }
+  deserialize_node_timers(blob);
+  remap_param0();
 
   if (blob.remaining()) {
-    std::cout << RED << "Left over data: " << blob.remaining() << CLEAR << "\n";
-
-    if (DEBUG) {
-      const size_t len = std::min(static_cast<size_t>(128), blob.remaining());
-      std::cout << to_hex_block(blob.ptr(), len);
-    }
-
-    return false;
+    std::stringstream ss;
+    const size_t len = std::min(static_cast<size_t>(128), blob.remaining());
+    ss << "BlobReader has left over data after deserialization.  Remaining "
+          "bytes: "
+       << blob.remaining() << " " << to_hex_block(blob.ptr(), len);
+    throw SerializationError(ss.str());
   }
 
   return true;
 }
 
 bool MapBlock::deserialize_nodes(BlobReader &blob) {
-  if (DEBUG) {
-    std::cout << CYAN << "deserialize_nodes:\n" << CLEAR;
-  }
-
   // node data (zlib-compressed if version < 29).
   // We expect 16384 bytes.
-  std::vector<uint8_t> node_buffer;
-  if (!blob.decompress_zlib(&node_buffer, "nodes")) {
-    return false;
-  }
+  const std::vector<uint8_t> node_buffer = blob.decompress_zlib("nodes");
+
   if (node_buffer.size() != NODE_DATA_SIZE) {
-    std::cout << "node_buffer.size() == " << node_buffer.size() << "\n";
-    return false;
+    std::stringstream ss;
+    ss << "MapBlock::deserialize_nodes() decompressed into "
+       << node_buffer.size() << " nodes; expected " << NODE_DATA_SIZE
+       << " instead.";
+    throw SerializationError(ss.str());
   }
 
   nodes_.resize(NODES_PER_BLOCK);
@@ -127,25 +94,10 @@ bool MapBlock::deserialize_nodes(BlobReader &blob) {
 }
 
 bool MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
-  if (DEBUG) {
-    std::cout << CYAN << "deserialize_metadata:\n" << CLEAR;
-  }
-
-  std::vector<uint8_t> meta_buffer;
-  if (!blob.decompress_zlib(&meta_buffer, "metadata")) {
-    return false;
-  }
+  const std::vector<uint8_t> meta_buffer = blob.decompress_zlib("metadata");
   BlobReader r(meta_buffer);
 
-  if (DEBUG) {
-    const size_t len = std::min(static_cast<size_t>(128), r.remaining());
-    std::cout << to_hex_block(r.ptr(), len);
-  }
-
-  uint8_t version = 0;
-  if (!r.read_u8(&version, "meta.version")) {
-    return false;
-  }
+  const uint8_t version = r.read_u8("meta.version");
   if (!version) {
     return true;
   } // no metadata
@@ -153,17 +105,10 @@ bool MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
     return false;
   } // expect version 2.
 
-  uint16_t count = 0;
-  if (!r.read_u16(&count, "meta.count")) {
-    return false;
-  }
+  const uint16_t count = r.read_u16("meta.count");
 
   for (uint16_t meta_idx = 0; meta_idx < count; meta_idx++) {
-    uint16_t local_pos = 0;
-    if (!r.read_u16(&local_pos, "meta.pos")) {
-      return false;
-    }
-
+    const uint16_t local_pos = r.read_u16("meta.pos");
     const NodePos pos(pos_id, local_pos);
 
     assert(local_pos < NODES_PER_BLOCK);
@@ -175,45 +120,24 @@ bool MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
 
 bool MapBlock::deserialize_name_id_mapping(BlobReader &blob,
                                            ThreadLocalIdMap &id_map) {
-  if (DEBUG) {
-    std::cout << CYAN << "deserialize_name_id_mapping:\n" << CLEAR;
-    const size_t len = std::min(static_cast<size_t>(128), blob.remaining());
-    std::cout << to_hex_block(blob.ptr(), len);
-  }
-
-  uint8_t nim_version = 0;
-  if (!blob.read_u8(&nim_version, "nim.version")) {
-    return false;
-  }
+  const uint8_t nim_version = blob.read_u8("nim.version");
   if (nim_version != 0) {
     return false;
   }
 
-  uint16_t nim_count = 0;
-  if (!blob.read_u16(&nim_count, "nim.count")) {
-    return false;
-  }
+  uint16_t nim_count = blob.read_u16("nim.count");
 
   param0_map_.resize(nim_count, -1);
 
   for (; nim_count > 0; --nim_count) {
-    uint16_t id = 0;
-    if (!blob.read_u16(&id, "nim.id")) {
-      return false;
-    }
+    const uint16_t id = blob.read_u16("nim.id");
     if (id >= 4096) {
       return false;
     }
 
-    uint16_t name_len = 0;
-    if (!blob.read_u16(&name_len, "nim.name_len")) {
-      return false;
-    }
+    const uint16_t name_len = blob.read_u16("nim.name_len");
 
-    std::string name;
-    if (!blob.read_str(&name, name_len, "nim.name")) {
-      return false;
-    }
+    const std::string name = blob.read_str(name_len, "nim.name");
 
     if (id > param0_map_.size()) {
       param0_map_.resize(id, -1);
@@ -227,95 +151,47 @@ bool MapBlock::deserialize_name_id_mapping(BlobReader &blob,
 
 // For now, we don't care about them, so just parse and toss them.
 bool MapBlock::deserialize_static_objects(BlobReader &blob) {
-  if (DEBUG) {
-    std::cout << CYAN << "deserialize_static_objects:\n" << CLEAR;
-    const size_t len = std::min(static_cast<size_t>(256), blob.remaining());
-    std::cout << to_hex_block(blob.ptr(), len);
-  }
-
-  uint8_t obj_version = 0;
-  if (!blob.read_u8(&obj_version, "static_object.version")) {
-    return false;
-  }
+  const uint8_t obj_version = blob.read_u8("static_object.version");
   if (obj_version != 0) {
     return false;
   }
 
-  uint16_t obj_count = 0;
-  if (!blob.read_u16(&obj_count, "static_object.count")) {
-    return false;
-  }
+  uint16_t obj_count = blob.read_u16("static_object.count");
 
   for (; obj_count > 0; --obj_count) {
-    uint8_t type = 0;
-    if (!blob.read_u8(&type, "static_object.type")) {
-      return false;
-    }
+    const uint8_t type __attribute__((unused)) =
+        blob.read_u8("static_object.type");
 
-    int32_t x, y, z;
-    if (!blob.read_s32(&x, "static_object.x")) {
-      return false;
-    }
-    if (!blob.read_s32(&y, "static_object.y")) {
-      return false;
-    }
-    if (!blob.read_s32(&z, "static_object.z")) {
-      return false;
-    }
+    const int32_t x __attribute__((unused)) = blob.read_s32("static_object.x");
+    const int32_t y __attribute__((unused)) = blob.read_s32("static_object.y");
+    const int32_t z __attribute__((unused)) = blob.read_s32("static_object.z");
+    const uint16_t data_size = blob.read_u16("static_object.data_size");
 
-    uint16_t data_size = 0;
-    if (!blob.read_u16(&data_size, "static_object.data_size")) {
-      return false;
-    }
-    if (!blob.skip(data_size, "static_object.data")) {
-      return false;
-    }
+    // TODO: Actually import static objects.
+    blob.skip(data_size, "static_object.data");
   }
 
   return true;
 }
 
-bool MapBlock::deserialize_node_timers(BlobReader &blob) {
-  if (DEBUG) {
-    std::cout << CYAN << "deserialize_static_objects:\n" << CLEAR;
-    const size_t len = std::min(static_cast<size_t>(256), blob.remaining());
-    std::cout << to_hex_block(blob.ptr(), len);
-  }
-
-  uint8_t single_timer_len = 0;
-  if (!blob.read_u8(&single_timer_len, "timer.len")) {
-    return false;
-  }
-
-  uint16_t num_of_timers = 0;
-  if (!blob.read_u16(&num_of_timers, "timer.count")) {
-    return false;
-  }
+void MapBlock::deserialize_node_timers(BlobReader &blob) {
+  const uint8_t single_timer_len __attribute__((unused)) =
+      blob.read_u8("timer.len");
+  uint16_t num_of_timers = blob.read_u16("timer.count");
 
   for (; num_of_timers > 0; --num_of_timers) {
-    uint16_t pos = 0;
-    if (!blob.read_u16(&pos, "timer.pos")) {
-      return false;
-    }
+    const uint16_t pos __attribute__((unused)) = blob.read_u16("timer.pos");
+    const int32_t timeout __attribute__((unused)) =
+        blob.read_s32("timer.timeout");
+    const int32_t elapsed __attribute__((unused)) =
+        blob.read_s32("timer.elapsed");
 
-    int32_t timeout = 0;
-    if (!blob.read_s32(&timeout, "timer.timeout")) {
-      return false;
-    }
-
-    int32_t elapsed = 0;
-    if (!blob.read_s32(&elapsed, "timer.elapsed")) {
-      return false;
-    }
+    // TODO: Do something with the node timers.
   }
-
-  return true;
 }
 
-bool MapBlock::remap_param0() {
+void MapBlock::remap_param0() {
   for (Node &node : nodes_) {
     node.param_0 = param0_map_.at(node.param_0);
   }
-
-  return true;
 }
