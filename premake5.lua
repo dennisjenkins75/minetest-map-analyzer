@@ -16,9 +16,7 @@ function include_spdlog()
         "vendor/spdlog/include",
     }
 
-    -- TODO: Use the header-only libfmt?
-    -- https://github.com/fmtlib/fmt/issues/2157
-    links { "lib_spdlog", "fmt" }
+    links { "lib_spdlog" }
 end
 
 function include_sqlite()
