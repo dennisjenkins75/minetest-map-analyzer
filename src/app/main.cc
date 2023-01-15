@@ -46,7 +46,7 @@ void Usage(const char *prog) {
 }
 
 int main(int argc, char *argv[]) {
-  spdlog::set_level(spdlog::level::trace);
+  spdlog::set_level(spdlog::level::info);
   Config config;
 
   // Threads == 0 means "all on main thread" and "no progress bar".
