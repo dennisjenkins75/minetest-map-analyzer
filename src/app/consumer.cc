@@ -1,6 +1,3 @@
-#include <iomanip>
-#include <iostream>
-
 #include <spdlog/spdlog.h>
 
 #include "src/app/app.h"
@@ -70,17 +67,8 @@ void App::RunConsumer() {
 
       local_stats->by_type_.at(node.param0())++;
       const uint64_t owner_id = owner.empty() ? 0 : actor_id_cache.Add(owner);
-
       const uint64_t minegeld = node.inventory().total_minegeld();
-      if (minegeld > 0) {
-        std::cout << "minegeld: " << std::setw(12) << minegeld << " "
-                  << NodePos(pos, i).str() << " " << name << "\n";
-      }
-
       const bool is_bones = (name == "bones::bones");
-      if (is_bones) {
-        std::cout << "bones: " << NodePos(pos, i).str() << " " << owner << "\n";
-      }
 
       if (minegeld || is_bones || (owner_id > -0)) {
         auto dwn = std::make_unique<DataWriterNode>();
