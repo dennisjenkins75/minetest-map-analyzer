@@ -13,6 +13,12 @@ MapBlock::MapBlock()
 void MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
                            ThreadLocalIdMap &id_map) {
   version_ = blob.read_u8("version");
+  if (version_ != 28) {
+    throw SerializationError(blob, "MapBlock::deserialize",
+                             std::string("Unsupported version ") +
+                                 std::to_string(version_));
+  }
+
   flags_ = blob.read_u8("flags");
   lighting_complete_ = blob.read_u16("lighting_complete");
 

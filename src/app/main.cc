@@ -141,6 +141,12 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  // If the output database already exists, we must clear it out.  Currently,
+  // we do not support "resuming an aborted analysis", so running twice with
+  // the same output database will result in primary key violations.
+  // Ok to ignore failure if file does not exist.
+  unlink(config.data_filename.c_str());
+
   App app(config);
   app.Run();
 

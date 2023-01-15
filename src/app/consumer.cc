@@ -19,7 +19,8 @@ void App::RunConsumer() {
   auto local_stats = std::make_unique<StatsData>();
 
   while (true) {
-    if (local_stats->good_map_blocks_ > kStatsBlockFlushLimit) {
+    if ((local_stats->good_map_blocks_ + local_stats->bad_map_blocks_) >
+        kStatsBlockFlushLimit) {
       stats_.EnqueueStatsData(std::move(local_stats));
       local_stats = std::make_unique<StatsData>();
     }
@@ -41,18 +42,18 @@ void App::RunConsumer() {
     BlobReader blob(raw_data.value());
     MapBlock mb;
 
-    local_stats->good_map_blocks_++;
-
     try {
       mb.deserialize(blob, key.pos, node_id_cache);
     } catch (const SerializationError &err) {
       // TODO: Log these failed blocks and error message to an output table.
       local_stats->bad_map_blocks_++;
-      spdlog::error("Failed to deserialize mapblock {0} {1} {2}", pos.str(),
+      local_stats->by_version_[mb.version()]++;
+      spdlog::error("Failed to deserialize mapblock {0} {1}. {2}", pos.str(),
                     key.pos, err.what());
       continue;
     }
 
+    local_stats->good_map_blocks_++;
     local_stats->by_version_[mb.version()]++;
     std::vector<std::unique_ptr<DataWriterNode>> node_queue;
     node_queue.reserve(256);
