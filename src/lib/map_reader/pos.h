@@ -1,7 +1,4 @@
-// pos.h
-
-#ifndef _MT_MAP_SEARCH_POS_H_
-#define _MT_MAP_SEARCH_POS_H_
+#pragma once
 
 #include <sstream>
 #include <string>
@@ -112,5 +109,3 @@ struct NodePos : public Pos<int64_t> {
   static NodePos min() { return NodePos(-32768, -32768, -32768); }
   static NodePos max() { return NodePos(32767, 32767, 32767); }
 };
-
-#endif // _MT_MAP_SEARCH_POS_H_

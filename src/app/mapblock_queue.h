@@ -1,5 +1,4 @@
-#ifndef __MTMAP_MAPBLOCK_QUEUE_H
-#define __MTMAP_MAPBLOCK_QUEUE_H
+#pragma once
 
 #include <condition_variable>
 #include <mutex>
@@ -95,5 +94,3 @@ private:
   mutable std::mutex mutex_;
   std::condition_variable cv_;
 };
-
-#endif // __MTMAP_MAPBLOCK_QUEUE_H
