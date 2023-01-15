@@ -27,7 +27,9 @@ void StatsData::DumpToFile(const IdMap &node_map) {
   ofs.open("nodes-by-type.out");
   for (size_t idx = 0; idx < std::min(by_type_.size(), node_map.size());
        idx++) {
-    ofs << node_map.Get(idx) << " " << by_type_.at(idx) << "\n";
+    if (by_type_.at(idx)) {
+      ofs << node_map.Get(idx) << " " << by_type_.at(idx) << "\n";
+    }
   }
   ofs.close();
 }
