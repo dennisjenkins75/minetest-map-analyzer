@@ -7,33 +7,6 @@
 
 #include "src/app/stats.h"
 
-void StatsData::DumpToFile(const IdMap &node_map) {
-  std::ofstream ofs("stats.out");
-
-  ofs << "bad_map_blocks: " << bad_map_blocks_ << "\n";
-  ofs << "good_map_blocks: " << good_map_blocks_ << "\n";
-  ofs << "bad %: "
-      << 100.0 * static_cast<double>(bad_map_blocks_) /
-             static_cast<double>(good_map_blocks_ + bad_map_blocks_)
-      << "\n";
-
-  for (int i = 0; i < 256; i++) {
-    if (by_version_[i]) {
-      ofs << "version: " << i << " = " << by_version_[i] << "\n";
-    }
-  }
-  ofs.close();
-
-  ofs.open("nodes-by-type.out");
-  for (size_t idx = 0; idx < std::min(by_type_.size(), node_map.size());
-       idx++) {
-    if (by_type_.at(idx)) {
-      ofs << node_map.Get(idx) << " " << by_type_.at(idx) << "\n";
-    }
-  }
-  ofs.close();
-}
-
 void StatsData::Merge(const StatsData &a) {
   queued_map_blocks_ += a.queued_map_blocks_;
   good_map_blocks_ += a.good_map_blocks_;

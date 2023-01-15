@@ -35,19 +35,12 @@ struct StatsData {
   // Count of each node.
   std::vector<uint64_t> by_type_;
 
-  void DumpToFile(const IdMap &node_map);
-
   void Merge(const StatsData &a);
 };
 
 class Stats {
 public:
   Stats() : data_(), queue_(), mutex_(), cv_() {}
-
-  void DumpToFile(const IdMap &node_map) {
-    std::unique_lock<std::mutex> lock;
-    data_.DumpToFile(node_map);
-  }
 
   uint64_t QueuedBlocks() {
     std::unique_lock<std::mutex> lock;

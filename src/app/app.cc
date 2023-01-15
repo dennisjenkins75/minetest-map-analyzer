@@ -133,6 +133,4 @@ void App::Run() {
                rate / config_.threads);
   spdlog::info("Unique nodes: {0}", node_ids_.size());
   spdlog::info("Unique actors: {0}", actor_ids_.size());
-
-  stats_.DumpToFile(node_ids_);
 }
