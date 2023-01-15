@@ -4,8 +4,18 @@ static constexpr char kSqlLoadBlock[] = R"sql(
 select data from blocks where pos = :pos
 )sql";
 
+// Normally "blocks" has no column "mtime".  "mtime" is added by the mapserver
+// mod and is useful for "tailing" the blocks table to continually find freshly
+// changed mapblocks.
 static constexpr char kSqlListBlocks[] = R"sql(
 select pos, mtime
+from blocks
+where pos between :min_pos and :max_pos
+)sql";
+
+// Fallback for if "mtime" does not exist.
+static constexpr char kSqlListBlocksNoMtime[] = R"sql(
+select pos, 0 as mtime
 from blocks
 where pos between :min_pos and :max_pos
 )sql";
@@ -19,9 +29,16 @@ MapInterfaceSqlite3::MapInterfaceSqlite3(std::string_view connection_str)
   db_ = std::make_unique<SqliteDb>(connection_str);
 
   stmt_load_block_ = std::make_unique<SqliteStmt>(*db_.get(), kSqlLoadBlock);
-  stmt_list_blocks_ = std::make_unique<SqliteStmt>(*db_.get(), kSqlListBlocks);
   stmt_delete_block_ =
       std::make_unique<SqliteStmt>(*db_.get(), kSqlDeleteBlock);
+
+  try {
+    stmt_list_blocks_ =
+        std::make_unique<SqliteStmt>(*db_.get(), kSqlListBlocks);
+  } catch (const Sqlite3Error &err) {
+    stmt_list_blocks_ =
+        std::make_unique<SqliteStmt>(*db_.get(), kSqlListBlocksNoMtime);
+  }
 }
 
 std::optional<MapInterface::Blob>
