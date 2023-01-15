@@ -49,6 +49,10 @@ int main(int argc, char *argv[]) {
   spdlog::set_level(spdlog::level::trace);
   Config config;
 
+  // Threads == 0 means "all on main thread" and "no progress bar".
+  // To get the progress bar, we must have at least 1 consumer thread.
+  config.threads = 1;
+
   while (true) {
     int option_index = 0;
     int c = getopt_long(argc, argv, "l:t:", long_options, &option_index);
