@@ -9,9 +9,6 @@
 #include "src/lib/map_reader/pos.h"
 #include "src/lib/map_reader/utils.h"
 
-// Flush stats every this many blocks.
-static constexpr size_t kStatsBlockFlushLimit = 256;
-
 void App::RunConsumer() {
   spdlog::trace("Consumer entry");
   std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
@@ -22,7 +19,7 @@ void App::RunConsumer() {
   auto local_stats = std::make_unique<StatsData>();
 
   while (true) {
-    if (local_stats->total_map_blocks_ > kStatsBlockFlushLimit) {
+    if (local_stats->good_map_blocks_ > kStatsBlockFlushLimit) {
       stats_.EnqueueStatsData(std::move(local_stats));
       local_stats = std::make_unique<StatsData>();
     }
@@ -44,7 +41,7 @@ void App::RunConsumer() {
     BlobReader blob(raw_data.value());
     MapBlock mb;
 
-    local_stats->total_map_blocks_++;
+    local_stats->good_map_blocks_++;
 
     try {
       mb.deserialize(blob, key.pos, node_id_cache);

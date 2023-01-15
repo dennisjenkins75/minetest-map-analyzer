@@ -7,17 +7,23 @@
 
 #include "src/lib/id_map/id_map.h"
 
+// Flush stats every this many blocks.
+static constexpr size_t kStatsBlockFlushLimit = 256;
+
 // Used to pass statistica data from consumers to the "StatsQueue", for
 // merging into the main stats.  Individual consumer threads have too much
 // lock contention to directly manipulate the final stats, so we must use a
 // "Map / Reduce" type operation.
 struct StatsData {
   StatsData()
-      : total_map_blocks_(0), bad_map_blocks_(0), by_version_{},
-        by_type_(65536, 0) {}
+      : queued_map_blocks_(0), good_map_blocks_(0),
+        bad_map_blocks_(0), by_version_{}, by_type_(65536, 0) {}
 
-  // Total count of map blocks.
-  uint64_t total_map_blocks_;
+  // Total count of map blocks (set by producer).
+  uint64_t queued_map_blocks_;
+
+  // Count of map blocks successfully processed.
+  uint64_t good_map_blocks_;
 
   // Count of map blocks that failed to parse.
   uint64_t bad_map_blocks_;
@@ -43,16 +49,23 @@ public:
     data_.DumpToFile(node_map);
   }
 
+  uint64_t QueuedBlocks() {
+    std::unique_lock<std::mutex> lock;
+    return data_.good_map_blocks_;
+  }
+
+  StatsData Get() const {
+    StatsData ret;
+    std::unique_lock<std::mutex> lock;
+    ret.Merge(data_);
+    return ret;
+  }
+
   // Assumes ownership, caller must re-allocate.
   void EnqueueStatsData(std::unique_ptr<StatsData> packet) {
     std::unique_lock<std::mutex> lock;
     queue_.push_back(std::move(packet));
     cv_.notify_one();
-  }
-
-  uint64_t TotalBlocks() {
-    std::unique_lock<std::mutex> lock;
-    return data_.total_map_blocks_;
   }
 
   // Queues special node telling `StatsMergeThread()` to stop processing and

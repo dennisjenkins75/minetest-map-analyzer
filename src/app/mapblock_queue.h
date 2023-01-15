@@ -89,6 +89,18 @@ public:
     return queue_.empty();
   }
 
+  // Waits until the queue is either tombstoned, or the timeout is reached.
+  // Returns 'true' if the timeout is reached AND the queue still has data.
+  // Returns 'false' if the queue is tombstoned.
+  // These 5 shitty lines took 30 minutes to debug.  You're welcome.
+  template <class Rep, class Period>
+  bool idle_wait(const std::chrono::duration<Rep, Period> &timeout) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    return !cv_.wait_for(lock, timeout, [this]() {
+      return !queue_.empty() && queue_.top().isTombstone();
+    });
+  }
+
 private:
   std::priority_queue<MapBlockKey> queue_;
   mutable std::mutex mutex_;

@@ -14,10 +14,12 @@ public:
   App(const Config &config)
       : config_(config), actor_ids_(), node_ids_(),
         data_writer_(config, node_ids_, actor_ids_), map_block_queue_(),
-        stats_() {}
+        stats_(), start_time_(std::chrono::steady_clock::now()) {}
   ~App() {}
 
   void Run();
+
+  void DisplayProgress();
 
 private:
   const Config config_;
@@ -26,6 +28,7 @@ private:
   DataWriter data_writer_;
   MapBlockQueue map_block_queue_;
   Stats stats_;
+  std::chrono::time_point<std::chrono::steady_clock> start_time_;
 
   // Can be called directly (on main thread), or as a thread body.
   // Exits when all mapblocks have been produced.
