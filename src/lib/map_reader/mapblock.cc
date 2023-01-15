@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cassert>
 #include <sstream>
 
 #include "mapblock.h"
@@ -23,11 +22,18 @@ void MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
   }
 
   content_width_ = blob.read_u8("content_width");
-  // TODO: Replace all usage of `assert()` with `SerializationError`.
-  assert(content_width_ == 2);
+  if (content_width_ != 2) {
+    throw SerializationError(blob, "MapBlock::deserialize",
+                             std::string("Unsupported content_width ") +
+                                 std::to_string(content_width_));
+  }
 
   params_width_ = blob.read_u8("params_width");
-  assert(params_width_ == 2);
+  if (params_width_ != 2) {
+    throw SerializationError(blob, "MapBlock::deserialize",
+                             std::string("Unsupported params_width ") +
+                                 std::to_string(params_width_));
+  }
 
   deserialize_nodes(blob);
   deserialize_metadata(blob, pos_id);
@@ -93,9 +99,15 @@ void MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
 
   for (uint16_t meta_idx = 0; meta_idx < count; meta_idx++) {
     const uint16_t local_pos = r.read_u16("meta.pos");
+
+    if (local_pos >= NODES_PER_BLOCK) {
+      throw SerializationError(blob, "MapBlock::deserialize_metadata",
+                               std::string("Invalid metadata.pos ") +
+                                   std::to_string(local_pos));
+    }
+
     const NodePos pos(pos_id, local_pos);
 
-    assert(local_pos < NODES_PER_BLOCK);
     nodes_.at(local_pos).deserialize_metadata(r, version, pos);
   }
 }

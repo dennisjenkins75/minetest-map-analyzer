@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cassert>
 #include <iostream>
 
 #include "src/lib/map_reader/blob_reader.h"
