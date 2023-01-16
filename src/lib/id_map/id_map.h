@@ -5,6 +5,7 @@
 #include <mutex>
 #include <queue>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include "src/lib/database/db-sqlite3.h"
