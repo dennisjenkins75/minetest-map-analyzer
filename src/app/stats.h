@@ -44,7 +44,7 @@ public:
   Stats() : data_(), queue_(), mutex_(), cv_() {}
 
   uint64_t QueuedBlocks() {
-    std::unique_lock<std::mutex> lock;
+    std::unique_lock<std::mutex> lock(mutex_);
     return data_.good_map_blocks_;
   }
 
@@ -57,7 +57,7 @@ public:
 
   // Assumes ownership, caller must re-allocate.
   void EnqueueStatsData(std::unique_ptr<StatsData> packet) {
-    std::unique_lock<std::mutex> lock;
+    std::unique_lock<std::mutex> lock(mutex_);
     queue_.push_back(std::move(packet));
     cv_.notify_one();
   }
@@ -65,7 +65,7 @@ public:
   // Queues special node telling `StatsMergeThread()` to stop processing and
   // return.
   void SetTombstone() {
-    std::unique_lock<std::mutex> lock;
+    std::unique_lock<std::mutex> lock(mutex_);
     queue_.push_back(nullptr);
     cv_.notify_all();
   }
