@@ -96,6 +96,8 @@ void App::RunThreaded() {
     t.join();
   }
 
+  spdlog::info("Flushing output data...");
+  // TODO: Run the datawriter flushers in threads.
   data_writer_.FlushIdMaps();
   data_writer_.FlushNodeQueue();
   data_writer_.FlushBlockQueue();
