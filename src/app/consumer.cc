@@ -19,7 +19,7 @@ void App::RunConsumer() {
   auto local_stats = std::make_unique<StatsData>();
 
   while (true) {
-    if ((local_stats->good_map_blocks_ + local_stats->bad_map_blocks_) >
+    if ((local_stats->good_map_blocks_ + local_stats->bad_map_blocks_) >=
         kStatsBlockFlushLimit) {
       stats_.EnqueueStatsData(std::move(local_stats));
       local_stats = std::make_unique<StatsData>();

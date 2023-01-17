@@ -17,7 +17,7 @@ void App::RunProducer() {
     count++;
     local_stats->queued_map_blocks_++;
 
-    if (local_stats->queued_map_blocks_ > kStatsBlockFlushLimit) {
+    if (local_stats->queued_map_blocks_ >= kStatsBlockFlushLimit) {
       stats_.EnqueueStatsData(std::move(local_stats));
       local_stats = std::make_unique<StatsData>();
     }
