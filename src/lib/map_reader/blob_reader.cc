@@ -2,11 +2,27 @@
 #include <zstd.h>
 
 #include <iostream>
+#include <memory>
 
 #include "blob_reader.h"
 #include "utils.h"
 
 static constexpr size_t BUFFER_SIZE = 1024 * 32;
+
+namespace {
+constexpr size_t ZSTD_BUFSIZE = 32768;
+
+constexpr size_t kDefaultReserveSize = 128 * 1024;
+
+struct ZSTD_C_Deleter {
+  void operator()(ZSTD_CStream *cstream) { ZSTD_freeCStream(cstream); }
+};
+
+struct ZSTD_D_Deleter {
+  void operator()(ZSTD_DStream *dstream) { ZSTD_freeDStream(dstream); }
+};
+
+} // namespace
 
 SerializationError::SerializationError(const BlobReader &br,
                                        const std::string_view desc,
@@ -105,4 +121,42 @@ std::vector<uint8_t> BlobReader::decompress_zlib(const std::string_view desc) {
   inflateEnd(&z);
 
   return dest;
+}
+
+std::vector<uint8_t> BlobReader::decompress_zstd(const std::string_view desc) {
+  // Reusing the context is recommended for performance.  It will be destroyed
+  // when the thread ends
+  thread_local std::unique_ptr<ZSTD_DStream, ZSTD_D_Deleter> stream(
+      ZSTD_createDStream());
+  ZSTD_initDStream(stream.get());
+
+  // Input buffer.
+  ZSTD_inBuffer zinput = {const_cast<uint8_t *>(ptr()), remaining(), 0};
+
+  // Output buffer.
+  std::vector<uint8_t> output;
+  output.reserve(kDefaultReserveSize);
+
+  while (zinput.pos < zinput.size) {
+    // Extend output buffer.
+    size_t tail = output.size();
+    output.resize(tail + ZSTD_BUFSIZE);
+
+    // Reset where ZSTD should write to.
+    ZSTD_outBuffer zoutput = {output.data() + tail, ZSTD_BUFSIZE, 0};
+
+    size_t ret = ZSTD_decompressStream(stream.get(), &zoutput, &zinput);
+    if (ZSTD_isError(ret)) {
+      throw SerializationError(
+          *this, desc, std::string("decompress_zstd") + ZSTD_getErrorName(ret));
+    }
+
+    // Adjust end of buffer (chop of part not used)
+    output.resize(tail + zoutput.pos);
+  }
+
+  // Update input stream pointer.
+  skip(zinput.pos, "zstd.decompress");
+
+  return output;
 }

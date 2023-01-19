@@ -13,19 +13,39 @@ MapBlock::MapBlock()
 void MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
                            ThreadLocalIdMap &id_map) {
   version_ = blob.read_u8("version");
-  if (version_ != 28) {
-    throw SerializationError(blob, "MapBlock::deserialize",
-                             std::string("Unsupported version ") +
-                                 std::to_string(version_));
+  switch (version_) {
+    case 28:
+      deserialize_format_28(blob, pos_id, id_map);
+      break;
+
+    case 29:
+      deserialize_format_29(blob, pos_id, id_map);
+      break;
+
+    default:
+      throw SerializationError(blob, "MapBlock::deserialize",
+                               std::string("Unsupported version ") +
+                                   std::to_string(version_));
   }
 
+  remap_param0();
+  verify_all_data_consumed(blob);
+}
+
+void MapBlock::verify_all_data_consumed(BlobReader &blob) {
+  if (blob.remaining()) {
+    std::stringstream ss;
+    const size_t len = std::min(static_cast<size_t>(128), blob.remaining());
+    ss << "Left over data after deserialization.  Remaining byte sample: "
+       << to_hex(blob.ptr(), len);
+    throw SerializationError(blob, "MapBlock::deserialize", ss.str());
+  }
+}
+
+void MapBlock::deserialize_format_28(BlobReader &blob, int64_t pos_id,
+                                     ThreadLocalIdMap &id_map) {
   flags_ = blob.read_u8("flags");
   lighting_complete_ = blob.read_u16("lighting_complete");
-
-  if (version_ >= 29) {
-    timestamp_ = blob.read_u32("timestamp");
-    deserialize_name_id_mapping(blob, id_map);
-  }
 
   content_width_ = blob.read_u8("content_width");
   if (content_width_ != 2) {
@@ -41,28 +61,50 @@ void MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
                                  std::to_string(params_width_));
   }
 
-  deserialize_nodes(blob);
-  deserialize_metadata(blob, pos_id);
+  deserialize_nodes_28(blob);
+  deserialize_metadata_28(blob, pos_id);
   deserialize_static_objects(blob);
 
-  if (version_ <= 28) {
-    timestamp_ = blob.read_u32("timestamp");
-    deserialize_name_id_mapping(blob, id_map);
-  }
+  timestamp_ = blob.read_u32("timestamp");
+  deserialize_name_id_mapping(blob, id_map);
 
   deserialize_node_timers(blob);
-  remap_param0();
-
-  if (blob.remaining()) {
-    std::stringstream ss;
-    const size_t len = std::min(static_cast<size_t>(128), blob.remaining());
-    ss << "Left over data after deserialization.  Remaining byte sample: "
-       << to_hex(blob.ptr(), len);
-    throw SerializationError(blob, "MapBlock::deserialize", ss.str());
-  }
 }
 
-void MapBlock::deserialize_nodes(BlobReader &blob) {
+void MapBlock::deserialize_format_29(BlobReader &blob_zstd, int64_t pos_id,
+                                     ThreadLocalIdMap &id_map) {
+  const std::vector<uint8_t> fmt29_raw =
+      blob_zstd.decompress_zstd("format-29.zstd");
+  BlobReader b2(fmt29_raw);
+
+  flags_ = b2.read_u8("flags");
+  lighting_complete_ = b2.read_u16("lighting_complete");
+
+  timestamp_ = b2.read_u32("timestamp");
+  deserialize_name_id_mapping(b2, id_map);
+
+  content_width_ = b2.read_u8("content_width");
+  if (content_width_ != 2) {
+    throw SerializationError(b2, "MapBlock::deserialize",
+                             std::string("Unsupported content_width ") +
+                                 std::to_string(content_width_));
+  }
+
+  params_width_ = b2.read_u8("params_width");
+  if (params_width_ != 2) {
+    throw SerializationError(b2, "MapBlock::deserialize",
+                             std::string("Unsupported params_width ") +
+                                 std::to_string(params_width_));
+  }
+
+  deserialize_nodes_29(b2);
+  deserialize_metadata_29(b2, pos_id);
+  deserialize_static_objects(b2);
+  deserialize_node_timers(b2);
+  verify_all_data_consumed(b2);
+}
+
+void MapBlock::deserialize_nodes_28(BlobReader &blob) {
   // node data (zlib-compressed if version < 29).
   // We expect 16384 bytes.
   const std::vector<uint8_t> node_buffer = blob.decompress_zlib("nodes");
@@ -85,7 +127,23 @@ void MapBlock::deserialize_nodes(BlobReader &blob) {
   }
 }
 
-void MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
+void MapBlock::deserialize_nodes_29(BlobReader &blob) {
+  nodes_.resize(NODES_PER_BLOCK);
+
+  // TODO: Might be faster to bulk copy 16384 bytes instead of reading them
+  // byte/word at a time.
+  for (size_t i = 0; i < NODES_PER_BLOCK; i++) {
+    nodes_[i].param_0 = blob.read_u16("nodes.param0");
+  }
+  for (size_t i = 0; i < NODES_PER_BLOCK; i++) {
+    nodes_[i].param_1 = blob.read_u8("nodes.param1");
+  }
+  for (size_t i = 0; i < NODES_PER_BLOCK; i++) {
+    nodes_[i].param_2 = blob.read_u8("nodes.param2");
+  }
+}
+
+void MapBlock::deserialize_metadata_28(BlobReader &blob, int64_t pos_id) {
   const std::vector<uint8_t> meta_buffer = blob.decompress_zlib("metadata");
   BlobReader r(meta_buffer);
 
@@ -115,6 +173,36 @@ void MapBlock::deserialize_metadata(BlobReader &blob, int64_t pos_id) {
     const NodePos pos(pos_id, local_pos);
 
     nodes_.at(local_pos).deserialize_metadata(r, version, pos);
+  }
+}
+
+void MapBlock::deserialize_metadata_29(BlobReader &blob, int64_t pos_id) {
+  const uint8_t version = blob.read_u8("meta.version");
+  if (!version) {
+    // No metadata to deserialize.
+    return;
+  }
+
+  if (version != 2) {
+    throw SerializationError(blob, "deserialize_metadata",
+                             std::string("Unsupported meta.version value ") +
+                                 std::to_string(version));
+  }
+
+  const uint16_t count = blob.read_u16("meta.count");
+
+  for (uint16_t meta_idx = 0; meta_idx < count; meta_idx++) {
+    const uint16_t local_pos = blob.read_u16("meta.pos");
+
+    if (local_pos >= NODES_PER_BLOCK) {
+      throw SerializationError(blob, "MapBlock::deserialize_metadata",
+                               std::string("Invalid metadata.pos ") +
+                                   std::to_string(local_pos));
+    }
+
+    const NodePos pos(pos_id, local_pos);
+
+    nodes_.at(local_pos).deserialize_metadata(blob, version, pos);
   }
 }
 

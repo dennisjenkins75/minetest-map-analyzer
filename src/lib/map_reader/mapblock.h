@@ -56,10 +56,20 @@ private:
   // Index is param0, Value is global node id.
   std::vector<int> param0_map_;
 
-  void deserialize_nodes(BlobReader &blob);
+  // Format #28: Minetest-5.4.x, Multicraft-2.x
+  void deserialize_format_28(BlobReader &blob, int64_t pos_id,
+                             ThreadLocalIdMap &id_map);
+
+  // Format #29: Minetest-5.5.x.
+  void deserialize_format_29(BlobReader &blob_zstd, int64_t pos_id,
+                             ThreadLocalIdMap &id_map);
+
+  void deserialize_nodes_28(BlobReader &blob);
+  void deserialize_nodes_29(BlobReader &blob);
 
   // TODO: Change 2nd arg to 'const MapBlockPos &pos'.
-  void deserialize_metadata(BlobReader &blob, int64_t pos_id);
+  void deserialize_metadata_28(BlobReader &blob, int64_t pos_id);
+  void deserialize_metadata_29(BlobReader &blob, int64_t pos_id);
 
   void deserialize_name_id_mapping(BlobReader &blob, ThreadLocalIdMap &id_map);
 
@@ -68,4 +78,6 @@ private:
   void deserialize_node_timers(BlobReader &blob);
 
   void remap_param0();
+
+  void verify_all_data_consumed(BlobReader &blob);
 };

@@ -99,6 +99,12 @@ public:
   // Will throw an exception if decompression fails.
   std::vector<uint8_t> decompress_zlib(const std::string_view desc);
 
+  // Assume that `_ptr` points to a zstd compressed block.  Return decompressed
+  // data and update this->_ptr to point to the first byte after the zstd
+  // compressed stream ends.
+  // Will throw an exception if decompression fails.
+  std::vector<uint8_t> decompress_zstd(const std::string_view desc);
+
 private:
   const std::vector<uint8_t> &_blob;
   const uint8_t *_ptr;

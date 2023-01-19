@@ -203,7 +203,7 @@ project "unit_tests"
     include_sqlite()
 
     filter { "system:linux" }
-        links { "pthread", "z" }
+        links { "pthread", "z", "zstd" }
 
     filter { "action:gmake or action:gmake2" }
         disablewarnings { "sign-compare" }
@@ -231,7 +231,7 @@ project "map_analyzer"
     links { "database_lib", "idmap_lib", "map_reader_lib", "schema_lib" }
 
     filter { "system:linux" }
-        links { "pthread", "z" }
+        links { "pthread", "z", "zstd" }
 
     filter { "action:gmake or action:gmake2" }
         disablewarnings { "sign-compare" }
