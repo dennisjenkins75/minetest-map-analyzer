@@ -10,7 +10,7 @@
 struct Config {
   Config()
       : min_pos(MapBlockPos::min()), max_pos(MapBlockPos::max()),
-        map_filename(), data_filename(), threads(0),
+        map_filename(), out_filename(), threads(0),
         max_load_avg(std::thread::hardware_concurrency()) {}
 
   MapBlockPos min_pos;
@@ -20,7 +20,7 @@ struct Config {
   std::string map_filename;
 
   // Full path to output sqlite file (created by our app, from app/schema).
-  std::string data_filename;
+  std::string out_filename;
 
   // Count of consumer worker threads.
   // If zero, then the producer and consumer will run serially on the main

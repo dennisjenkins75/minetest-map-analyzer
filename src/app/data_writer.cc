@@ -33,9 +33,9 @@ DataWriter::DataWriter(const Config &config, IdMap &node_id_map,
       database_(), stmt_actor_(), stmt_node_(), stmt_nodes_(),
       stmt_inventory_(), stmt_blocks_(), node_queue_(), node_mutex_(),
       node_cv_(), block_queue_(), block_mutex_(), block_cv_() {
-  VerifySchema(config_.data_filename);
+  VerifySchema(config_.out_filename);
 
-  database_ = std::make_unique<SqliteDb>(config.data_filename);
+  database_ = std::make_unique<SqliteDb>(config.out_filename);
   stmt_actor_ = std::make_unique<SqliteStmt>(*database_.get(), kSqlWriteActor);
   stmt_node_ = std::make_unique<SqliteStmt>(*database_.get(), kSqlWriteNode);
   stmt_nodes_ = std::make_unique<SqliteStmt>(*database_.get(), kSqlWriteNodes);

@@ -4,7 +4,7 @@
 
 void DebugLogConfig(const Config &config) {
   spdlog::debug("config.map_filename: {0}", config.map_filename);
-  spdlog::debug("config.data_filename: {0}", config.data_filename);
+  spdlog::debug("config.out_filename: {0}", config.out_filename);
   spdlog::debug("config.min_pos: {0} {1}", config.min_pos.str(),
                 config.min_pos.MapBlockId());
   spdlog::debug("config.max_pos: {0} {1}", config.max_pos.str(),

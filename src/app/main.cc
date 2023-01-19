@@ -18,7 +18,7 @@ static constexpr int OPT_MIN = 257;
 static constexpr int OPT_MAX = 258;
 static constexpr int OPT_POS = 259;
 static constexpr int OPT_MAP = 260;
-static constexpr int OPT_DATA = 261;
+static constexpr int OPT_OUT = 261;
 static constexpr int OPT_HELP = 262;
 
 static struct option long_options[] = {
@@ -27,7 +27,7 @@ static struct option long_options[] = {
     {"max", required_argument, NULL, OPT_MAX},
     {"pos", required_argument, NULL, OPT_POS},
     {"map", required_argument, NULL, OPT_MAP},
-    {"data", required_argument, NULL, OPT_DATA},
+    {"out", required_argument, NULL, OPT_OUT},
     {"threads", required_argument, NULL, 't'},
     {"max_load_avg", required_argument, NULL, 'l'},
     {NULL, 0, NULL, 0}};
@@ -42,7 +42,7 @@ void Usage(const char *prog) {
   std::cerr << "  --threads n      - Max count of consumer threads.\n";
   std::cerr << "  --max_load_avg n - Max load average to allow.\n";
   std::cerr << "  --map   filename - Path to map.sqlite file (REQUIRED).\n";
-  std::cerr << "  --data  filename - Path to filename to store all data in.\n";
+  std::cerr << "  --out   filename - Path to output sqlite file (REQUIRED).\n";
 }
 
 int main(int argc, char *argv[]) {
@@ -110,8 +110,8 @@ int main(int argc, char *argv[]) {
         config.map_filename = optarg;
         break;
 
-      case OPT_DATA:
-        config.data_filename = optarg;
+      case OPT_OUT:
+        config.out_filename = optarg;
         break;
 
       default:
@@ -135,8 +135,8 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  if (config.data_filename.empty()) {
-    std::cerr << "Error: required argument '--data' is missing.\n";
+  if (config.out_filename.empty()) {
+    std::cerr << "Error: required argument '--out' is missing.\n";
     Usage(argv[0]);
     exit(EXIT_FAILURE);
   }
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
   // we do not support "resuming an aborted analysis", so running twice with
   // the same output database will result in primary key violations.
   // Ok to ignore failure if file does not exist.
-  unlink(config.data_filename.c_str());
+  unlink(config.out_filename.c_str());
 
   App app(config);
   app.Run();
