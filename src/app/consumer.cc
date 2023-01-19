@@ -67,8 +67,9 @@ void App::RunConsumer() {
       const uint64_t owner_id = owner.empty() ? 0 : actor_id_cache.Add(owner);
       const uint64_t minegeld = node.inventory().total_minegeld();
       const bool is_bones = (name == "bones::bones");
+      const bool has_inventory = !node.inventory().empty();
 
-      if (minegeld || is_bones || (owner_id > -0)) {
+      if (minegeld || is_bones || has_inventory || (owner_id > -0)) {
         auto dwn = std::make_unique<DataWriterNode>();
         dwn->pos = NodePos(pos, i);
         dwn->owner_id = owner_id;
