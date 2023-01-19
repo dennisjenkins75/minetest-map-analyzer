@@ -2,12 +2,12 @@
 
 create table `actor` (
   actor_id integer primary key,
-  name text
+  name text not null
 );
 
 create table `node` (
   node_id integer primary key,
-  name text
+  name text not null
 );
 
 create table `nodes` (
