@@ -51,6 +51,14 @@ public:
     cv_.notify_one();
   }
 
+  void Enqueue(std::vector<MapBlockKey> &&keys) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    for (auto &key : keys) {
+      queue_.push(key);
+    }
+    cv_.notify_one();
+  }
+
   // Enqueues a special MapBlockKey that will always sort LAST and represents
   // a "tombstone", so that consumer threads know to stop waiting for items
   // and to exit.
