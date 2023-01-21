@@ -9,8 +9,7 @@
 
 #include "src/lib/id_map/id_map.h"
 #include "src/lib/map_reader/blob_reader.h"
-
-class Node;
+#include "src/lib/map_reader/node.h"
 
 class MapBlock {
 public:

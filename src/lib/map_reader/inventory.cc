@@ -1,8 +1,9 @@
 #include <regex>
 
-#include "blob_reader.h"
-#include "inventory.h"
-#include "utils.h"
+#include "src/lib/map_reader/blob_reader.h"
+#include "src/lib/map_reader/inventory.h"
+#include "src/lib/map_reader/minegeld.h"
+#include "src/lib/map_reader/utils.h"
 
 // https://github.com/minetest/minetest/blob/master/doc/world_format.txt#L554
 // Read "\n" terminates strings until we find "EndInventory\n".
@@ -74,36 +75,11 @@ void Inventory::deserialize_inventory(BlobReader &blob) {
   }
 }
 
-// "currency:minegeld_10 46"
-
-static const std::regex re_minegeld("currency:minegeld(_)?(\\d+)?( \\d+)?");
-
 uint64_t InventoryList::total_minegeld() const {
   uint64_t total = 0;
 
   for (const auto &item_str : items_) {
-    std::smatch sm;
-    if (std::regex_match(item_str, sm, re_minegeld)) {
-      if (sm.size() == 4) {
-        int denom = strtoul(sm[2].str().c_str(), nullptr, 10);
-        int qty = strtoul(sm[3].str().c_str(), nullptr, 10);
-        total += (denom * qty);
-        continue;
-      }
-    }
-
-    if (item_str.find("currency:minegeld_cent") != std::string::npos) {
-      continue;
-    }
-    if (item_str.find("currency:minegeld_bundle") != std::string::npos) {
-      continue;
-    }
-
-    if (item_str.find("currency:minegeld") != std::string::npos) {
-      // TODO: Not sure what to do here.
-      // Maybe the current mod added a new node sub-type?
-      continue;
-    }
+    total += ParseCurrencyMinegeld(item_str);
   }
 
   return total;

@@ -214,7 +214,7 @@ INSTANTIATE_TEST_SUITE_P(
 // clang-format on
 
 struct RoundTripBlockIdTestData {
-  explicit RoundTripBlockIdTestData(int64_t v): mapblock_id(v) {}
+  explicit RoundTripBlockIdTestData(int64_t v) : mapblock_id(v) {}
   int64_t mapblock_id;
 };
 

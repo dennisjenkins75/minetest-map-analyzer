@@ -50,6 +50,19 @@ public:
     return by_id_.at(id);
   }
 
+  // Returns value if exists, size_t(-1) if not.  Does NOT modify.
+  size_t Get(const std::string &key) const {
+    // TODO: Use a reader/writer lock.
+    std::unique_lock<std::mutex> lock(mutex_);
+
+    const auto iter = by_string_.find(key);
+    if (iter != by_string_.end()) {
+      return iter->second;
+    }
+
+    return static_cast<size_t>(-1);
+  }
+
   // Atomically returns pairs of all dirty items, and clears the dirty flag.
   using DirtyList = std::vector<std::pair<size_t, std::string>>;
   DirtyList GetDirty() {
