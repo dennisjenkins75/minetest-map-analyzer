@@ -1,7 +1,7 @@
 // Utility to scan every node in a Minetest `map.sqlite` database, looking
 // for specific nodes (ex: chest with minegeld).
 
-// Only supports mapblock version 28 ('1c') (minetest-5.4.x, multicraft-2.0.x)
+// Only supports mapblock version 28 and 29.
 // https://github.com/minetest/minetest/blob/master/doc/world_format.txt
 
 #include <getopt.h>
