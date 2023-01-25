@@ -13,7 +13,7 @@ clang-format -i $(
 
 [[ -x ${MDFORMAT} ]] && {
   echo -e "${GREEN}mdformat${CLEAR}"
-  ${MDFORMAT} README.md ./src ./doc
+  ${MDFORMAT} *.md ./src ./doc
 }
 
 [[ -x ${TYPOS} ]] && {

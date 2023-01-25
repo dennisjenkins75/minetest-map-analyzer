@@ -11,6 +11,10 @@ function include_gtest()
     links { "lib_gtest" }
 end
 
+function include_pqxx()
+    links { "pqxx" }
+end
+
 function include_spdlog()
     includedirs {
         "vendor/spdlog/include",
@@ -199,6 +203,7 @@ project "unit_tests"
     systemversion "latest"
     links { "database_lib", "idmap_lib", "map_reader_lib" }
     include_gtest()
+    include_pqxx()
     include_spdlog()
     include_sqlite()
 
@@ -225,6 +230,7 @@ project "map_analyzer"
     removefiles {
         "src/app/**_test.cc",
     }
+    include_pqxx()
     include_spdlog()
     include_sqlite()
     systemversion "latest"

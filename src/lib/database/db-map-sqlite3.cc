@@ -1,4 +1,5 @@
 #include "src/lib/database/db-map-sqlite3.h"
+#include "src/lib/exceptions/exceptions.h"
 
 static constexpr char kSqlLoadBlock[] = R"sql(
 select data from blocks where pos = :pos
@@ -62,16 +63,17 @@ void MapInterfaceSqlite3::DeleteMapBlocks(
 
 bool MapInterfaceSqlite3::ProduceMapBlocks(
     const MapBlockPos &min, const MapBlockPos &max,
-    std::function<bool(int64_t, int64_t)> callback) {
+    std::function<bool(const MapBlockPos &, int64_t)> callback) {
 
   stmt_list_blocks_->BindInt(1, min.MapBlockId());
   stmt_list_blocks_->BindInt(2, max.MapBlockId());
 
   while (stmt_list_blocks_->Step()) {
-    const int64_t pos = stmt_list_blocks_->ColumnInt64(0);
+    const int64_t block_id = stmt_list_blocks_->ColumnInt64(0);
     const int64_t mtime = stmt_list_blocks_->ColumnInt64(1);
+    const MapBlockPos pos(block_id);
 
-    if (!MapBlockPos(pos).inside(min, max)) {
+    if (!pos.inside(min, max)) {
       continue;
     }
 

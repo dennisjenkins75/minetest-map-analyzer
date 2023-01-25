@@ -20,6 +20,7 @@ static constexpr int OPT_POS = 259;
 static constexpr int OPT_MAP = 260;
 static constexpr int OPT_OUT = 261;
 static constexpr int OPT_HELP = 262;
+static constexpr int OPT_DRIVER = 263;
 
 static struct option long_options[] = {
     {"help", no_argument, NULL, OPT_HELP},
@@ -28,21 +29,24 @@ static struct option long_options[] = {
     {"pos", required_argument, NULL, OPT_POS},
     {"map", required_argument, NULL, OPT_MAP},
     {"out", required_argument, NULL, OPT_OUT},
+    {"driver", required_argument, NULL, OPT_DRIVER},
     {"threads", required_argument, NULL, 't'},
     {"max_load_avg", required_argument, NULL, 'l'},
     {NULL, 0, NULL, 0}};
 
 void Usage(const char *prog) {
-  std::cerr << "Usage: " << prog << " [options]\n";
-  std::cerr << "Options: \n";
-  std::cerr << "  --help           - Display this help.\n";
-  std::cerr << "  --min   x,y,z    - Min mapblock to examine.\n";
-  std::cerr << "  --max   x,y,z    - Max mapblock to examine.\n";
-  std::cerr << "  --pos   x,y,z    - Only mapblock to examine.\n";
-  std::cerr << "  --threads n      - Max count of consumer threads.\n";
-  std::cerr << "  --max_load_avg n - Max load average to allow.\n";
-  std::cerr << "  --map   filename - Path to map.sqlite file (REQUIRED).\n";
-  std::cerr << "  --out   filename - Path to output sqlite file (REQUIRED).\n";
+  std::cerr
+      << "Usage: " << prog << " [options]\n"
+      << "Options: \n"
+      << "  --help           - Display this help.\n"
+      << "  --min   x,y,z    - Min mapblock to examine.\n"
+      << "  --max   x,y,z    - Max mapblock to examine.\n"
+      << "  --pos   x,y,z    - Only mapblock to examine.\n"
+      << "  --threads n      - Max count of consumer threads.\n"
+      << "  --max_load_avg n - Max load average to allow.\n"
+      << "  --driver type    - Map reader driver (sqlite or postgresql).\n"
+      << "  --map   filename - Path to map.sqlite file (REQUIRED).\n"
+      << "  --out   filename - Path to output sqlite file (REQUIRED).\n";
 }
 
 int main(int argc, char *argv[]) {
@@ -104,6 +108,17 @@ int main(int argc, char *argv[]) {
         }
         config.max_pos = MapBlockPos(config.min_pos.x + 1, config.min_pos.y + 1,
                                      config.min_pos.z + 1);
+        break;
+
+      case OPT_DRIVER:
+        if (!strcmp(optarg, "sqlite")) {
+          config.driver_type = MapDriverType::SQLITE;
+        } else if (!strcmp(optarg, "postgresql") || !strcmp(optarg, "pgsql")) {
+          config.driver_type = MapDriverType::POSTGRESQL;
+        } else {
+          std::cerr << "ERROR: Invalid driver value: " << optarg << "\n";
+          exit(EXIT_FAILURE);
+        }
         break;
 
       case OPT_MAP:

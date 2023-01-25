@@ -1,7 +1,6 @@
 #include <spdlog/spdlog.h>
 
 #include "src/app/app.h"
-#include "src/app/factory.h"
 #include "src/lib/database/db-map-interface.h"
 #include "src/lib/map_reader/blob_reader.h"
 #include "src/lib/map_reader/mapblock.h"
@@ -11,7 +10,8 @@
 
 void App::RunConsumer() {
   spdlog::trace("Consumer entry");
-  std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
+  std::unique_ptr<MapInterface> map =
+      MapInterface::Create(config_.driver_type, config_.map_filename);
 
   ThreadLocalIdMap node_id_cache(node_ids_);
   ThreadLocalIdMap actor_id_cache(actor_ids_);

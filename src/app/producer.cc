@@ -1,14 +1,14 @@
 #include <spdlog/spdlog.h>
 
 #include "src/app/app.h"
-#include "src/app/factory.h"
 #include "src/lib/database/db-map-interface.h"
 
 static constexpr size_t kDefaultProducerBatchSize = 2048;
 
 void App::RunProducer() {
   spdlog::trace("Producer entry");
-  std::unique_ptr<MapInterface> map = CreateMapInterface(config_);
+  std::unique_ptr<MapInterface> map =
+      MapInterface::Create(config_.driver_type, config_.map_filename);
 
   int64_t count = 0;
   auto local_stats = std::make_unique<StatsData>();
@@ -16,11 +16,11 @@ void App::RunProducer() {
   keys.reserve(kDefaultProducerBatchSize);
 
   const auto callback = [this, &count, &local_stats,
-                         &keys](int64_t id, int64_t mtime) -> bool {
+                         &keys](const MapBlockPos &pos, int64_t mtime) -> bool {
     count++;
     local_stats->queued_map_blocks_++;
 
-    keys.push_back(MapBlockKey(id, mtime));
+    keys.push_back(MapBlockKey(pos.MapBlockId(), mtime));
     if (keys.size() >= kDefaultProducerBatchSize) {
       map_block_queue_.Enqueue(std::move(keys));
 

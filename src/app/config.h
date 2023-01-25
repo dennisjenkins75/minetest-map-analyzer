@@ -2,6 +2,7 @@
 
 #include <thread>
 
+#include "src/lib/database/db-map-interface.h"
 #include "src/lib/map_reader/pos.h"
 
 // User config, captured from command line, shared read-only between worker
@@ -10,13 +11,20 @@
 struct Config {
   Config()
       : min_pos(MapBlockPos::min()), max_pos(MapBlockPos::max()),
-        map_filename(), out_filename(), threads(0),
-        max_load_avg(std::thread::hardware_concurrency()) {}
+        driver_type(MapDriverType::SQLITE), map_filename(), out_filename(),
+        threads(0), max_load_avg(std::thread::hardware_concurrency()) {}
 
   MapBlockPos min_pos;
   MapBlockPos max_pos;
 
-  // Full path to "map.sqlite" file.
+  // How to read source data (sqlite, postgresql, etc...)
+  MapDriverType driver_type;
+
+  // SQLITE: Full path to "map.sqlite" file.
+  //   Ex: "${HOME}/.minetest/worlds/myworld/map.sqlite"
+  // POSTGRESQL: Connection string.
+  //   Ex: "user=minetest password=12345 dbname=myworld port=5432"
+  //   Is passed to `PQconnectdb()` unmodified.
   std::string map_filename;
 
   // Full path to output sqlite file (created by our app, from app/schema).

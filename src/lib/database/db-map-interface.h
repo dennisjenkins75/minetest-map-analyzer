@@ -6,9 +6,15 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "src/lib/map_reader/pos.h"
+
+enum MapDriverType {
+  SQLITE = 0,
+  POSTGRESQL = 1,
+};
 
 class MapInterface {
 public:
@@ -18,8 +24,8 @@ public:
   // Valid driver names are:
   // "sqlite3": sqlite3 backend, connection_string is raw filename.
   // "postgresql" (not implemented yet).
-  static std::unique_ptr<MapInterface> Create(std::string_view driver_name,
-                                              std::string_view connection_str);
+  static std::unique_ptr<MapInterface>
+  Create(MapDriverType type, const std::string &connection_str);
 
   virtual ~MapInterface() {}
 
@@ -30,9 +36,9 @@ public:
   // Returns `true` after all map blocks are processed AND the `callback`
   // returned true for each map block.  Aborts early on database error and/or
   // if `callback` returns `false`.
-  virtual bool
-  ProduceMapBlocks(const MapBlockPos &min, const MapBlockPos &max,
-                   std::function<bool(int64_t, int64_t)> callback) = 0;
+  virtual bool ProduceMapBlocks(
+      const MapBlockPos &min, const MapBlockPos &max,
+      std::function<bool(const MapBlockPos &pos, int64_t)> callback) = 0;
 
   virtual void DeleteMapBlocks(const std::vector<MapBlockPos> &list) = 0;
 
