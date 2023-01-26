@@ -1,3 +1,6 @@
+local has_pqxx = os.findheader("pqxx/pqxx")
+
+
 function set_cpp_dialect()
     cppdialect "C++2a"
 end
@@ -12,7 +15,14 @@ function include_gtest()
 end
 
 function include_pqxx()
-    links { "pqxx" }
+    -- Postgresql support is conditional on having "libpqxx" installed.
+    -- it is optional.
+    if has_pqxx then
+        defines { "HAS_PQXX=1" }
+        links { "pqxx" }
+    else
+        defines { "HAS_PQXX=0" }
+    end
 end
 
 function include_spdlog()
@@ -139,6 +149,7 @@ project "map_reader_lib"
 project "database_lib"
     hide_project_makefile()
     cpp_library()
+    include_pqxx()
     include_spdlog()
     include_sqlite()
     files {
@@ -147,6 +158,11 @@ project "database_lib"
     removefiles {
         "src/lib/database/**_test.cc",
     }
+    if has_pqxx == nil then
+        removefiles {
+            "src/lib/database/db-map-postgresql.cc",
+        }
+    end
     filter {"action:gmake or action:gmake2"}
         enablewarnings{"all"}
 

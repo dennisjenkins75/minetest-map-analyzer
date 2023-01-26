@@ -1,5 +1,7 @@
 #pragma once
 
+#if HAX_PQXX
+
 #include <pqxx/pqxx>
 
 #include "src/lib/database/db-map-interface.h"
@@ -22,3 +24,5 @@ protected:
   std::string pqxx_url_;
   std::unique_ptr<pqxx::connection> connection_;
 };
+
+#endif
