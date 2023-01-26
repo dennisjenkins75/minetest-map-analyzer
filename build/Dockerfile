@@ -13,7 +13,7 @@ RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -yq build-essential git
 
 RUN apt-get install -yq libcurl4-openssl-dev uuid-dev libzstd-dev zlib1g-dev \
-  libabsl-dev libfmt-dev
+  libabsl-dev libfmt-dev libpqxx-dev
 
 RUN apt-get clean
 

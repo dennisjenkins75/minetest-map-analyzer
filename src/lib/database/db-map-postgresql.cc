@@ -35,9 +35,20 @@ MapInterfacePostgresql::LoadMapBlock(const MapBlockPos &pos) {
     return std::nullopt; // block not found.
   }
 
+#if (PQXX_VERSION_MAJOR * 100 + PQXX_VERSION_MINOR) >= 704
+  // "binary_string" is deprecated.
+  // Need to port to use 'std::basic_string<std::byte>'.
   const pqxx::binarystring bin = result[0][0].as<pqxx::binarystring>();
   const uint8_t *data = static_cast<const uint8_t *>(bin.data());
-  return std::vector<uint8_t>(data, data + bin.size());
+  const size_t size = bin.size();
+#else
+  // Ubuntu 22.04 still uses libpqxx-6.4.
+  const pqxx::binarystring bin(result[0][0]);
+  const uint8_t *data = static_cast<const uint8_t *>(bin.data());
+  const size_t size = bin.size();
+#endif
+
+  return std::vector<uint8_t>(data, data + size);
 }
 
 bool MapInterfacePostgresql::ProduceMapBlocks(
