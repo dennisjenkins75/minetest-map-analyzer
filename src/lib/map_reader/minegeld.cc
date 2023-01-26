@@ -1,13 +1,20 @@
 #include <cstdlib>
+#include <cstring>
 
 #include "src/lib/map_reader/minegeld.h"
 
-// "currency:minegeld_10 46"
+// "currency:minegeld_10"
+// "currency:minegeld_25 46"
 
 static constexpr char kMinegeldPrefix[] = "currency:minegeld_";
 
 uint64_t ParseCurrencyMinegeld(const std::string &input) {
+#if defined(__cpp_lib_starts_ends_with)
+  // C++20 feature.
   if (!input.starts_with(kMinegeldPrefix)) {
+#else
+  if (strncmp(input.c_str(), kMinegeldPrefix, sizeof(kMinegeldPrefix) - 1)) {
+#endif
     return 0;
   }
 
