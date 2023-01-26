@@ -1,6 +1,6 @@
 #pragma once
 
-#if HAX_PQXX
+#if HAS_PQXX
 
 #include <pqxx/pqxx>
 
