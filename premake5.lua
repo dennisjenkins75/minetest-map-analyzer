@@ -182,6 +182,19 @@ project "idmap_lib"
 
     filter {}  -- reset filter
 
+project "name_filter_lib"
+    hide_project_makefile()
+    cpp_library()
+    files {
+        "src/lib/name_filter/**.cc",
+    }
+    removefiles {
+        "src/lib/name_filter/**_test.cc",
+    }
+    filter {"action:gmake or action:gmake2"}
+        enablewarnings{"all"}
+
+    filter {}  -- reset filter
 
 project "schema_lib"
     hide_project_makefile()
@@ -217,7 +230,7 @@ project "unit_tests"
        "src/**_test.cc",
     }
     systemversion "latest"
-    links { "database_lib", "idmap_lib", "map_reader_lib" }
+    links { "database_lib", "idmap_lib", "map_reader_lib", "name_filter_lib" }
     include_gtest()
     include_pqxx()
     include_spdlog()
@@ -250,7 +263,13 @@ project "map_analyzer"
     include_spdlog()
     include_sqlite()
     systemversion "latest"
-    links { "database_lib", "idmap_lib", "map_reader_lib", "schema_lib" }
+    links {
+        "database_lib",
+        "idmap_lib",
+        "map_reader_lib",
+        "name_filter_lib",
+        "schema_lib",
+    }
 
     filter { "system:linux" }
         links { "pthread", "z", "zstd" }
