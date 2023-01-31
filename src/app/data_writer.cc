@@ -6,7 +6,7 @@ static constexpr char kSqlWriteActor[] = R"sql(
 )sql";
 
 static constexpr char kSqlWriteNode[] = R"sql(
-  insert into node (node_id, name) values (:id, :name)
+  insert into node (node_id, name, special) values (:id, :name, :special)
 )sql";
 
 static constexpr char kSqlWriteNodes[] = R"sql(
@@ -27,8 +27,9 @@ static constexpr char kSqlWriteBlock[] = R"sql(
     (:mapblock_id, :mapblock_x, :mapblock_y, :mapblock_z, :uniform)
 )sql";
 
-DataWriter::DataWriter(const Config &config, IdMap &node_id_map,
-                       IdMap &actor_id_map)
+DataWriter::DataWriter(const Config &config,
+                       IdMap<NodeIdMapExtraInfo> &node_id_map,
+                       IdMap<ActorIdMapExtraInfo> &actor_id_map)
     : config_(config), actor_id_map_(actor_id_map), node_id_map_(node_id_map),
       database_(), stmt_actor_(), stmt_node_(), stmt_nodes_(),
       stmt_inventory_(), stmt_blocks_(), node_queue_(), node_mutex_(),
@@ -44,22 +45,35 @@ DataWriter::DataWriter(const Config &config, IdMap &node_id_map,
   stmt_blocks_ = std::make_unique<SqliteStmt>(*database_.get(), kSqlWriteBlock);
 }
 
-void DataWriter::FlushIdMaps() {
-  FlushDirtyIdMap(stmt_actor_.get(), actor_id_map_.GetDirty());
-  FlushDirtyIdMap(stmt_node_.get(), node_id_map_.GetDirty());
-}
+void DataWriter::FlushActorIdMap() {
+  DirtyList dirty_list = actor_id_map_.GetDirty();
 
-void DataWriter::FlushDirtyIdMap(SqliteStmt *stmt,
-                                 const IdMap::DirtyList &list) {
-  if (list.empty())
+  if (dirty_list.empty())
     return;
 
   database_->Begin();
-  for (const auto &item : list) {
-    stmt->BindInt(1, item.first);
-    stmt->BindText(2, item.second);
-    stmt->Step();
-    stmt->Reset();
+  for (const auto &item : dirty_list) {
+    stmt_actor_->BindInt(1, item.first);
+    stmt_actor_->BindText(2, item.second);
+    stmt_actor_->Step();
+    stmt_actor_->Reset();
+  }
+  database_->Commit();
+}
+
+void DataWriter::FlushNodeIdMap() {
+  DirtyList dirty_list = node_id_map_.GetDirty();
+
+  if (dirty_list.empty())
+    return;
+
+  database_->Begin();
+  for (const auto &item : dirty_list) {
+    stmt_node_->BindInt(1, item.first);
+    stmt_node_->BindText(2, item.second);
+    stmt_node_->BindBool(3, node_id_map_.Get(item.first).extra.special);
+    stmt_node_->Step();
+    stmt_node_->Reset();
   }
   database_->Commit();
 }

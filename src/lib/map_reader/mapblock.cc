@@ -11,7 +11,7 @@ MapBlock::MapBlock()
       params_width_(0), nodes_(), param0_map_() {}
 
 void MapBlock::deserialize(BlobReader &blob, int64_t pos_id,
-                           ThreadLocalIdMap &id_map) {
+                           ThreadLocalIdMap<NodeIdMapExtraInfo> &id_map) {
   version_ = blob.read_u8("version");
   switch (version_) {
     case 28:
@@ -42,8 +42,9 @@ void MapBlock::verify_all_data_consumed(BlobReader &blob) {
   }
 }
 
-void MapBlock::deserialize_format_28(BlobReader &blob, int64_t pos_id,
-                                     ThreadLocalIdMap &id_map) {
+void MapBlock::deserialize_format_28(
+    BlobReader &blob, int64_t pos_id,
+    ThreadLocalIdMap<NodeIdMapExtraInfo> &id_map) {
   flags_ = blob.read_u8("flags");
   lighting_complete_ = blob.read_u16("lighting_complete");
 
@@ -71,8 +72,9 @@ void MapBlock::deserialize_format_28(BlobReader &blob, int64_t pos_id,
   deserialize_node_timers(blob);
 }
 
-void MapBlock::deserialize_format_29(BlobReader &blob_zstd, int64_t pos_id,
-                                     ThreadLocalIdMap &id_map) {
+void MapBlock::deserialize_format_29(
+    BlobReader &blob_zstd, int64_t pos_id,
+    ThreadLocalIdMap<NodeIdMapExtraInfo> &id_map) {
   const std::vector<uint8_t> fmt29_raw =
       blob_zstd.decompress_zstd("format-29.zstd");
   BlobReader b2(fmt29_raw);
@@ -206,8 +208,8 @@ void MapBlock::deserialize_metadata_29(BlobReader &blob, int64_t pos_id) {
   }
 }
 
-void MapBlock::deserialize_name_id_mapping(BlobReader &blob,
-                                           ThreadLocalIdMap &id_map) {
+void MapBlock::deserialize_name_id_mapping(
+    BlobReader &blob, ThreadLocalIdMap<NodeIdMapExtraInfo> &id_map) {
   const uint8_t nim_version = blob.read_u8("nim.version");
   if (nim_version != 0) {
     throw SerializationError(blob, "deserialize_name_id_mapping",

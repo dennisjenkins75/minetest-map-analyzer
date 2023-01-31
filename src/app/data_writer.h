@@ -7,10 +7,12 @@
 #include <mutex>
 #include <queue>
 
+#include "src/app/actor.h"
 #include "src/app/config.h"
 #include "src/lib/database/db-sqlite3.h"
 #include "src/lib/id_map/id_map.h"
 #include "src/lib/map_reader/inventory.h"
+#include "src/lib/map_reader/mapblock.h"
 #include "src/lib/map_reader/node.h"
 #include "src/lib/map_reader/pos.h"
 
@@ -37,7 +39,8 @@ struct DataWriterBlock {
 class DataWriter {
 public:
   DataWriter() = delete;
-  DataWriter(const Config &config, IdMap &node_id_map, IdMap &actor_id_map);
+  DataWriter(const Config &config, IdMap<NodeIdMapExtraInfo> &node_id_map,
+             IdMap<ActorIdMapExtraInfo> &actor_id_map);
   ~DataWriter() {}
 
   void EnqueueNodes(std::vector<std::unique_ptr<DataWriterNode>> &&nodes) {
@@ -54,7 +57,9 @@ public:
     block_cv_.notify_one();
   }
 
-  void FlushIdMaps();
+  void FlushActorIdMap();
+
+  void FlushNodeIdMap();
 
   void FlushNodeQueue();
 
@@ -64,8 +69,8 @@ public:
 
 private:
   const Config &config_;
-  IdMap &actor_id_map_;
-  IdMap &node_id_map_;
+  IdMap<ActorIdMapExtraInfo> &actor_id_map_;
+  IdMap<NodeIdMapExtraInfo> &node_id_map_;
 
   std::unique_ptr<SqliteDb> database_;
   std::unique_ptr<SqliteStmt> stmt_actor_;
@@ -81,6 +86,4 @@ private:
   std::queue<std::unique_ptr<DataWriterBlock>> block_queue_;
   mutable std::mutex block_mutex_;
   std::condition_variable block_cv_;
-
-  void FlushDirtyIdMap(SqliteStmt *stmt, const IdMap::DirtyList &list);
 };

@@ -11,6 +11,12 @@
 #include "src/lib/map_reader/blob_reader.h"
 #include "src/lib/map_reader/node.h"
 
+struct NodeIdMapExtraInfo {
+  // Node for this content_id is considered "special".  That is, it is likely
+  // placed there by a player and not mapgen.
+  bool special;
+};
+
 class MapBlock {
 public:
   static constexpr size_t MAP_BLOCKSIZE = 16;
@@ -26,7 +32,8 @@ public:
   MapBlock();
 
   // TODO: Change 2nd arg to 'const MapBlockPos &pos'.
-  void deserialize(BlobReader &blob, int64_t pos_id, ThreadLocalIdMap &id_map);
+  void deserialize(BlobReader &blob, int64_t pos_id,
+                   ThreadLocalIdMap<NodeIdMapExtraInfo> &id_map);
 
   uint8_t version() { return version_; }
 
@@ -57,11 +64,11 @@ private:
 
   // Format #28: Minetest-5.4.x, Multicraft-2.x
   void deserialize_format_28(BlobReader &blob, int64_t pos_id,
-                             ThreadLocalIdMap &id_map);
+                             ThreadLocalIdMap<NodeIdMapExtraInfo> &id_map);
 
   // Format #29: Minetest-5.5.x.
   void deserialize_format_29(BlobReader &blob_zstd, int64_t pos_id,
-                             ThreadLocalIdMap &id_map);
+                             ThreadLocalIdMap<NodeIdMapExtraInfo> &id_map);
 
   void deserialize_nodes_28(BlobReader &blob);
   void deserialize_nodes_29(BlobReader &blob);
@@ -70,7 +77,9 @@ private:
   void deserialize_metadata_28(BlobReader &blob, int64_t pos_id);
   void deserialize_metadata_29(BlobReader &blob, int64_t pos_id);
 
-  void deserialize_name_id_mapping(BlobReader &blob, ThreadLocalIdMap &id_map);
+  void
+  deserialize_name_id_mapping(BlobReader &blob,
+                              ThreadLocalIdMap<NodeIdMapExtraInfo> &id_map);
 
   void deserialize_static_objects(BlobReader &blob);
 

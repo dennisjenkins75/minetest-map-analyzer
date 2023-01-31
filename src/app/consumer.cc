@@ -60,13 +60,14 @@ void App::RunConsumer() {
 
     for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
       const Node &node = mb.nodes()[i];
-      const std::string &name = node_id_cache.Get(node.param0());
+      const IdMapItem<NodeIdMapExtraInfo> &node_info =
+          node_id_cache.Get(node.param0());
       const std::string &owner = node.get_owner();
 
       local_stats->by_type_.at(node.param0())++;
       const uint64_t owner_id = owner.empty() ? 0 : actor_id_cache.Add(owner);
       const uint64_t minegeld = node.inventory().total_minegeld();
-      const bool is_bones = (name == "bones::bones");
+      const bool is_bones = (node_info.key == "bones::bones");
       const bool has_inventory = !node.inventory().empty();
 
       if (minegeld || is_bones || has_inventory || (owner_id > -0)) {

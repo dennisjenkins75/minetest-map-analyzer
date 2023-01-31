@@ -10,7 +10,8 @@ create table `actor` (
 
 create table `node` (
   node_id integer primary key,
-  name text not null
+  name text not null,
+  special bool not null
 );
 
 create table `nodes` (

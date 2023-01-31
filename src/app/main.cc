@@ -21,6 +21,7 @@ static constexpr int OPT_MAP = 260;
 static constexpr int OPT_OUT = 261;
 static constexpr int OPT_HELP = 262;
 static constexpr int OPT_DRIVER = 263;
+static constexpr int OPT_PATTERN = 264;
 
 static struct option long_options[] = {
     {"help", no_argument, NULL, OPT_HELP},
@@ -29,6 +30,7 @@ static struct option long_options[] = {
     {"pos", required_argument, NULL, OPT_POS},
     {"map", required_argument, NULL, OPT_MAP},
     {"out", required_argument, NULL, OPT_OUT},
+    {"pattern", required_argument, NULL, OPT_PATTERN},
     {"driver", required_argument, NULL, OPT_DRIVER},
     {"threads", required_argument, NULL, 't'},
     {"max_load_avg", required_argument, NULL, 'l'},
@@ -46,7 +48,8 @@ void Usage(const char *prog) {
       << "  --max_load_avg n - Max load average to allow.\n"
       << "  --driver type    - Map reader driver (sqlite or postgresql).\n"
       << "  --map   filename - Path to map.sqlite file (REQUIRED).\n"
-      << "  --out   filename - Path to output sqlite file (REQUIRED).\n";
+      << "  --out   filename - Path to output sqlite file (REQUIRED).\n"
+      << "  --pattern filename - Path to node name regex list (optional).\n";
 }
 
 int main(int argc, char *argv[]) {
@@ -127,6 +130,10 @@ int main(int argc, char *argv[]) {
 
       case OPT_OUT:
         config.out_filename = optarg;
+        break;
+
+      case OPT_PATTERN:
+        config.pattern_filename = optarg;
         break;
 
       default:

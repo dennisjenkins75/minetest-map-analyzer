@@ -25,6 +25,8 @@ public:
   // list.  Thread-safe if class is no longer Load()ing data.
   bool Search(const std::string &str) const;
 
+  size_t size() const { return patterns_.size(); }
+
 private:
   std::vector<std::regex> patterns_;
 };

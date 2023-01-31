@@ -102,13 +102,14 @@ static const std::vector<uint8_t> format_28_input = {
     0x72, 0x00, 0x01, 0x00, 0x0D, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74,
     0x3A, 0x73, 0x74, 0x6F, 0x6E, 0x65, 0x0A, 0x00, 0x00};
 
-void DumpNodes(const std::vector<Node> &nodes, const IdMap &id_map) {
-  const uint16_t air = id_map.Get("air");
+void DumpNodes(const std::vector<Node> &nodes,
+               const IdMap<NodeIdMapExtraInfo> &id_map) {
+  const uint16_t air = id_map.Get("air").id;
   for (int i = 0; i < 4096; i++) {
     const auto &node = nodes.at(i);
     if (node.param0() != air) {
-      std::cout << i << " " << node.param0() << " " << id_map.Get(node.param0())
-                << "\n";
+      std::cout << i << " " << node.param0() << " "
+                << id_map.Get(node.param0()).key << "\n";
     }
   }
 }
@@ -125,8 +126,8 @@ void DumpInventory(const Inventory &inv) {
 }
 
 TEST(MapBlock, Format28) {
-  IdMap id_map;
-  ThreadLocalIdMap id_cache(id_map);
+  IdMap<NodeIdMapExtraInfo> id_map;
+  ThreadLocalIdMap<NodeIdMapExtraInfo> id_cache(id_map);
 
   BlobReader blob_reader(format_28_input);
   MapBlock m;
@@ -143,7 +144,7 @@ TEST(MapBlock, Format28) {
 
   std::vector<std::string> found_node_names;
   for (size_t i = 0; i < id_map.size(); ++i) {
-    found_node_names.push_back(id_map.Get(i));
+    found_node_names.push_back(id_map.Get(i).key);
   }
   std::sort(found_node_names.begin(), found_node_names.end());
   EXPECT_THAT(found_node_names, ElementsAreArray(expected_node_names));
@@ -152,13 +153,13 @@ TEST(MapBlock, Format28) {
 
   // Chest (w/ minegeld inventory)
   const Node &chest = m.nodes().at(1994);
-  EXPECT_THAT(id_map.Get(chest.param0()), Eq("default:chest"));
+  EXPECT_THAT(id_map.Get(chest.param0()).key, Eq("default:chest"));
   // DumpInventory(chest.inventory());
   EXPECT_THAT(chest.inventory().total_minegeld(), Eq(10));
 
   // Furnace (w/ uncooked sand, no fuel, no outputs)
   const Node &furnace = m.nodes().at(1996);
-  EXPECT_THAT(id_map.Get(furnace.param0()), Eq("default:furnace"));
+  EXPECT_THAT(id_map.Get(furnace.param0()).key, Eq("default:furnace"));
   // DumpInventory(furnace.inventory());
   const auto furnace_src = furnace.inventory().lists().find("src");
   ASSERT_THAT(furnace_src, Ne(furnace.inventory().lists().end()));
@@ -167,7 +168,7 @@ TEST(MapBlock, Format28) {
 
   // Protection block (owned)
   const Node &prot = m.nodes().at(1998);
-  EXPECT_THAT(id_map.Get(prot.param0()), Eq("protector:protect"));
+  EXPECT_THAT(id_map.Get(prot.param0()).key, Eq("protector:protect"));
   // DumpInventory(prot.inventory());
   EXPECT_THAT(prot.get_owner(), Eq("sysadmin"));
 }

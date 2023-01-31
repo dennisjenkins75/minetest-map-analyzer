@@ -12,7 +12,8 @@ struct Config {
   Config()
       : min_pos(MapBlockPos::min()), max_pos(MapBlockPos::max()),
         driver_type(MapDriverType::SQLITE), map_filename(), out_filename(),
-        threads(0), max_load_avg(std::thread::hardware_concurrency()) {}
+        pattern_filename(), threads(0),
+        max_load_avg(std::thread::hardware_concurrency()) {}
 
   MapBlockPos min_pos;
   MapBlockPos max_pos;
@@ -29,6 +30,11 @@ struct Config {
 
   // Full path to output sqlite file (created by our app, from app/schema).
   std::string out_filename;
+
+  // Full path to input file containing list of node name regexes of nodes
+  // to consider "special", in that we treat any mapblock containing any of
+  // these nodes as "don't delete" during a map prube operation.
+  std::string pattern_filename;
 
   // Count of consumer worker threads.
   // If zero, then the producer and consumer will run serially on the main

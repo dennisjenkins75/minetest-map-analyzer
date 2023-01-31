@@ -1,4 +1,5 @@
 #include <chrono>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <list>
@@ -61,7 +62,8 @@ void App::RunSerially() {
   try {
     RunProducer();
     RunConsumer();
-    data_writer_.FlushIdMaps();
+    data_writer_.FlushActorIdMap();
+    data_writer_.FlushNodeIdMap();
     data_writer_.FlushNodeQueue();
     data_writer_.FlushBlockQueue();
     stats_.SetTombstone();
@@ -98,7 +100,8 @@ void App::RunThreaded() {
 
   spdlog::info("Flushing output data...");
   // TODO: Run the datawriter flushers in threads.
-  data_writer_.FlushIdMaps();
+  data_writer_.FlushActorIdMap();
+  data_writer_.FlushNodeIdMap();
   data_writer_.FlushNodeQueue();
   data_writer_.FlushBlockQueue();
 
@@ -117,6 +120,13 @@ void App::PreregisterContentIds() {
 }
 
 void App::Run() {
+  if (!config_.pattern_filename.empty()) {
+    std::ifstream ifs(config_.pattern_filename);
+    node_filter_.Load(ifs);
+    spdlog::info("Loaded {0} patterns into the node name filter from {1}.",
+                 node_filter_.size(), config_.pattern_filename);
+  }
+
   PreregisterContentIds();
 
   const auto t0 = std::chrono::steady_clock::now();
