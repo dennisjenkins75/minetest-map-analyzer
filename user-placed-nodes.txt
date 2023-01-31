@@ -1,0 +1,144 @@
+# List of regexes matching nodes likely placed by a user and not mapgen.
+
+3d_armor_stand:.*
+anvil:.*
+atm:.*
+bamboo:.*wood
+bamboo:stair_.*
+basic_materials:.*
+basic_signs:.*
+bbq:.*
+beacon:.*
+beds:.*
+biofuel:.*
+boards:black_board
+bones:bones
+bridger:.*
+building_blocks:.*
+carts:.*
+castle_gates:.*
+cblocks:.*
+cherrytree:wood
+computer:.*
+computers:.*
+currency:.*
+default:bronzeblock.*
+default:furnace.*
+default:glass
+default:goldblock.*
+default:ladder_.*
+default:.*_letter_.*
+default:meselamp
+default:mese_post_.*
+default:.*_wood
+digicontrol:.*
+digilines:.*
+digistuff:.*
+digiterms:.*
+digtron:.*
+doors:.*
+drawers:.*
+easyvend:.*
+ehlphabet:.*
+elevator:.*
+ethereal:fence_.*
+ethereal:fencegate_.*
+ethereal:mese_post_.*
+ethereal:.*_wood
+facade:.*
+factory_bridges:.*
+fake_fire:.*
+fancy_travelnet:.*
+fancy_vend:.*
+framedglass:.*
+geocache:block
+glass_stained:.*
+gloopblocks:.*
+gravelsieve:auto_sieve[0123]
+gravelsieve:sieve[0123]
+homedecor:.*
+home_vending_machines:.*
+home_workshop_machines:.*
+home_workshop_misc:.*
+inbox:.*
+itemframes:.*
+jail:.*
+jumpdrive:.*
+jumping:.*
+lavalamp:.*
+letters:.*
+locator:.*
+lrfurn:.*
+mesecons.*:.*
+moreblocks:.*
+more_chests:.*
+morelights:.*
+morelights_.*:.*
+moremesecons_.*:.*
+moremesecons_playerkiller:.*
+moreores:.*_block
+mypaths:.*
+new_glass:.*
+obsidianstuff:.*
+ontime_clocks:.*
+pipeworks:.*
+pipeworks_elbow:.*
+pkarcs:.*
+pkarcs_doors:.*
+pkarcs_doors3:.*
+plasmascreen:.*
+pontoons:.*
+prefab:.*
+priv_protector:.*
+protector:.*
+ropes:.*
+scifi_nodes:.*
+signs:.*
+signs_road:.*
+slats:.*
+smartshop:.*
+soundblock:.*
+spacecannon:.*
+stairs:.*
+steles:.*
+street_signs:.*
+technic:.*
+telemosaic:.*
+travelnet:.*
+vacuum:airpump
+vessels:.*
+walls:.*
+wine:.*
+wool:.*
+xdecor:.*
+xpanes:.*
+xp_redo:.*
+
+# TODO: Need a way to add an "exclusion" list also...
+
+
+# Specifically NOT included:
+
+# air
+# bakedclay:.*
+# bedrock:.*
+# draconis:.*
+# ethereal:.*_trunk
+# farming:.*
+# flowers:.*
+# ilights:.*
+# illumination:.*
+# mapserver:border
+# maptools:.*
+# missions:mission
+# mobs:.*
+# moreores:mineral_.*
+# moretrees:.*
+# paleotest:.*
+# planet_mars:.*
+# redwood:.*
+# redwood:redwood_trunk
+# rhotator:cube
+# tsm_pyramids:.*
+# vacuum:vacuum
+# vines:.*

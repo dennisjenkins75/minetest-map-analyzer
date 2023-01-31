@@ -38,8 +38,12 @@ $ premake5 --os=linux gmake
 
 $ make config=release
 
-$ ./bin/Release/map_analyzer --map ./map.sqlite --out ./output.sqlite \
-  -t 28 -l 20
+$ ./bin/Release/map_analyzer \
+  --map ./map.sqlite \
+  --out ./output.sqlite \
+  --pattern user-placed-nodes.txt \
+  -t 28 \
+  -l 20
 
 $ sqlite3 -column -header output.sqlite < reports/minegeld-by-player.sql
 ```
