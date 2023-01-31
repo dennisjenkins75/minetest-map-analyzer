@@ -37,6 +37,14 @@ void SqliteStmt::Reset() {
   sqlite3_reset(stmt_.get());
 }
 
+void SqliteStmt::BindBool(int index, bool value) {
+  int r = sqlite3_bind_int(stmt_.get(), index, value);
+  if (r != SQLITE_OK) {
+    throw Sqlite3Error(r, sqlite3_errmsg(db_ptr()), "sqlite3_bind_int(bool)",
+                       sqlite3_sql(stmt_.get()));
+  }
+}
+
 void SqliteStmt::BindInt(int index, int64_t value) {
   int r = sqlite3_bind_int64(stmt_.get(), index, value);
   if (r != SQLITE_OK) {

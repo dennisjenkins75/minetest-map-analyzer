@@ -76,6 +76,7 @@ public:
 
   void Reset();
 
+  void BindBool(int index, bool value);
   void BindInt(int index, int64_t value);
   void BindBlob(int index, const void *p, size_t size);
   void BindText(int index, const std::string_view &text);
