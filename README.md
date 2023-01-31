@@ -10,7 +10,7 @@ There are two main ways to compile the binaries for this project:
    missing developer packages (means vary by Linux distro).
 
    ```
-   $ git clone --recursive git@github.com:dennisjenkins75/minetest-map-analyzer.git
+   $ git clone --recursive https://github.com/dennisjenkins75/minetest-map-analyzer.git
    $ cd minetest-map-analyzer
    $ premake5 --os=linux gmake
    $ make -j20 config=release
@@ -22,7 +22,7 @@ There are two main ways to compile the binaries for this project:
    most likely won't run (I suppose I should statically link them...)
 
    ```
-   $ git clone --recursive git@github.com:dennisjenkins75/minetest-map-analyzer.git
+   $ git clone --recursive https://github.com/dennisjenkins75/minetest-map-analyzer.git
    $ cd minetest-map-analyzer
    $ ./build/docker-build.sh
    $ ./bin/Release/map_analyzer --help
