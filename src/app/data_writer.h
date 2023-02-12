@@ -28,12 +28,14 @@ struct DataWriterNode {
 };
 
 struct DataWriterBlock {
-  DataWriterBlock() : pos(), uniform(0) {}
+  DataWriterBlock() : pos(), uniform(0), anthropocene(false) {}
   MapBlockPos pos;
 
   // If the mapblock is 100% the same content_id, then place that here.
   // 0 otherwise.
   uint64_t uniform;
+
+  bool anthropocene;
 };
 
 class DataWriter {

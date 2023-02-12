@@ -12,9 +12,11 @@
 #include "src/lib/map_reader/node.h"
 
 struct NodeIdMapExtraInfo {
+  // TODO: Move the calculation and definition of `uint64_t uniform` into here.
+
   // Node for this content_id is considered "special".  That is, it is likely
   // placed there by a player and not mapgen.
-  bool special;
+  bool anthropocene;
 };
 
 class MapBlock {

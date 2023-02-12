@@ -57,5 +57,8 @@ create table `blocks` (
   mapblock_z integer not null,
 
   -- Content_id for node if block is 100% uniform, 0 otherwise.
-  uniform integer not null
+  uniform integer not null,
+
+  -- Mapblock contains likely human-generated content.
+  anthropocene bool not null
 );

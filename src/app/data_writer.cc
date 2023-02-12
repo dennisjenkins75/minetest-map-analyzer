@@ -22,9 +22,10 @@ static constexpr char kSqlWriteInventory[] = R"sql(
 
 static constexpr char kSqlWriteBlock[] = R"sql(
   insert into blocks
-    (mapblock_id, mapblock_x, mapblock_y, mapblock_z, uniform)
+    (mapblock_id, mapblock_x, mapblock_y, mapblock_z, uniform, anthropocene)
   values
-    (:mapblock_id, :mapblock_x, :mapblock_y, :mapblock_z, :uniform)
+    (:mapblock_id, :mapblock_x, :mapblock_y, :mapblock_z, :uniform,
+     :anthropocene)
 )sql";
 
 DataWriter::DataWriter(const Config &config,
@@ -71,7 +72,7 @@ void DataWriter::FlushNodeIdMap() {
   for (const auto &item : dirty_list) {
     stmt_node_->BindInt(1, item.first);
     stmt_node_->BindText(2, item.second);
-    stmt_node_->BindBool(3, node_id_map_.Get(item.first).extra.special);
+    stmt_node_->BindBool(3, node_id_map_.Get(item.first).extra.anthropocene);
     stmt_node_->Step();
     stmt_node_->Reset();
   }
@@ -124,12 +125,13 @@ void DataWriter::FlushBlockQueue() {
     std::unique_ptr<DataWriterBlock> block = std::move(block_queue_.front());
     block_queue_.pop();
 
-    if (block->uniform > 0) {
+    if (block->anthropocene || block->uniform > 0) {
       stmt_blocks_->BindInt(1, block->pos.MapBlockId());
       stmt_blocks_->BindInt(2, block->pos.x);
       stmt_blocks_->BindInt(3, block->pos.y);
       stmt_blocks_->BindInt(4, block->pos.z);
       stmt_blocks_->BindInt(5, block->uniform);
+      stmt_blocks_->BindBool(6, block->anthropocene);
       stmt_blocks_->Step();
       stmt_blocks_->Reset();
     }

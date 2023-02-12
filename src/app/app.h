@@ -59,7 +59,7 @@ private:
   // if they represent "special" nodes.
   NodeIdMapExtraInfo LookupNodeExtraInfo(const std::string &node_name) {
     return NodeIdMapExtraInfo{
-        .special = node_filter_.Search(node_name),
+        .anthropocene = node_filter_.Search(node_name),
     };
   }
 };

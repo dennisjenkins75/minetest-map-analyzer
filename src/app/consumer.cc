@@ -58,6 +58,9 @@ void App::RunConsumer() {
     std::vector<std::unique_ptr<DataWriterNode>> node_queue;
     node_queue.reserve(256);
 
+    bool anthropocene = false;
+    uint64_t uniform = 0;
+
     for (size_t i = 0; i < MapBlock::NODES_PER_BLOCK; i++) {
       const Node &node = mb.nodes()[i];
       const IdMapItem<NodeIdMapExtraInfo> &node_info =
@@ -80,6 +83,8 @@ void App::RunConsumer() {
 
         node_queue.push_back(std::move(dwn));
       }
+
+      anthropocene |= node_info.extra.anthropocene;
     }
 
     if (!node_queue.empty()) {
@@ -87,9 +92,14 @@ void App::RunConsumer() {
     }
 
     if (mb.unique_content_ids() == 1) {
+      uniform = mb.nodes()[0].param0();
+    }
+
+    if (uniform || anthropocene) {
       auto block = std::make_unique<DataWriterBlock>();
       block->pos = pos;
-      block->uniform = mb.nodes()[0].param0();
+      block->uniform = uniform;
+      block->anthropocene = anthropocene;
 
       data_writer_.EnqueueBlock(std::move(block));
     }
