@@ -131,6 +131,20 @@ project "lib_sqlite"
         "-DSQLITE_OMIT_LOAD_EXTENSION",
     }
 
+project "3dmatrix_lib"
+    hide_project_makefile()
+    cpp_library()
+    files {
+        "src/lib/3dmatrix/**.cc",
+    }
+    removefiles {
+        "src/lib/3dmatrix/**_test.cc",
+    }
+    filter {"action:gmake or action:gmake2"}
+        enablewarnings{"all"}
+
+    filter {}  -- reset filter
+
 project "map_reader_lib"
     hide_project_makefile()
     cpp_library()
@@ -230,7 +244,13 @@ project "unit_tests"
        "src/**_test.cc",
     }
     systemversion "latest"
-    links { "database_lib", "idmap_lib", "map_reader_lib", "name_filter_lib" }
+    links {
+        "3dmatrix_lib",
+        "database_lib",
+        "idmap_lib",
+        "map_reader_lib",
+        "name_filter_lib",
+    }
     include_gtest()
     include_pqxx()
     include_spdlog()
@@ -264,6 +284,7 @@ project "map_analyzer"
     include_sqlite()
     systemversion "latest"
     links {
+        "3dmatrix_lib",
         "database_lib",
         "idmap_lib",
         "map_reader_lib",

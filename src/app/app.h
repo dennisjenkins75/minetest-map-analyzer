@@ -7,9 +7,22 @@
 #include "src/app/data_writer.h"
 #include "src/app/mapblock_queue.h"
 #include "src/app/stats.h"
+#include "src/lib/3dmatrix/3dmatrix.h"
 #include "src/lib/id_map/id_map.h"
 #include "src/lib/map_reader/mapblock.h"
 #include "src/lib/name_filter/name_filter.h"
+
+struct BlockInfo {
+  BlockInfo() : uniform(0), anthropocene(false) {}
+
+  // If the mapblock is 100% the same content_id, then place that here.
+  // 0 otherwise.
+  uint16_t uniform;
+
+  // If the mapblock contains any nodes indicating that they were placed by
+  // a human player and no just mapgen.
+  uint8_t anthropocene;
+};
 
 class App {
 public:
@@ -31,6 +44,7 @@ private:
   NameFilter node_filter_;
   IdMap<ActorIdMapExtraInfo> actor_ids_;
   IdMap<NodeIdMapExtraInfo> node_ids_;
+  Sparse3DMatrix<BlockInfo> block_data_;
   DataWriter data_writer_;
   MapBlockQueue map_block_queue_;
   Stats stats_;

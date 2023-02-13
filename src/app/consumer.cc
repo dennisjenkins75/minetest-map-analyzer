@@ -87,6 +87,9 @@ void App::RunConsumer() {
       anthropocene |= node_info.extra.anthropocene;
     }
 
+    // TODO: 'DataWriter' and 'BlockInfo' duplicate functionality.
+    // Modify DataWriter to only queue the BlockPos, and have it read from
+    // `block_info_`.
     if (!node_queue.empty()) {
       data_writer_.EnqueueNodes(std::move(node_queue));
     }
@@ -103,6 +106,10 @@ void App::RunConsumer() {
 
       data_writer_.EnqueueBlock(std::move(block));
     }
+
+    BlockInfo &bi = block_data_.Ref(pos.x, pos.y, pos.z);
+    bi.uniform = uniform;
+    bi.anthropocene = anthropocene;
   }
 
   stats_.EnqueueStatsData(std::move(local_stats));
