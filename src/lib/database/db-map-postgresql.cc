@@ -53,7 +53,7 @@ MapInterfacePostgresql::LoadMapBlock(const MapBlockPos &pos) {
 
 bool MapInterfacePostgresql::ProduceMapBlocks(
     const MapBlockPos &min, const MapBlockPos &max,
-    std::function<bool(const MapBlockPos &, int64_t)> callback) {
+    std::function<bool(const MapBlockPos &)> callback) {
   pqxx::work xact(*connection_, __FUNCTION__);
   const auto result = xact.exec_prepared(kStmtProduceMapBlocks, min.x, max.x,
                                          min.y, max.y, min.z, max.z);
@@ -61,13 +61,12 @@ bool MapInterfacePostgresql::ProduceMapBlocks(
     const int x = row["posx"].as<int64_t>();
     const int y = row["posy"].as<int64_t>();
     const int z = row["posz"].as<int64_t>();
-    const int mtime = 0; // TODO: extract mtime if it exists?
 
     MapBlockPos pos(x, y, z);
     if (!pos.inside(min, max)) {
       continue;
     }
-    if (!callback(pos, mtime)) {
+    if (!callback(pos)) {
       return false;
     }
   }

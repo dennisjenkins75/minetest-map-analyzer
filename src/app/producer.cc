@@ -16,11 +16,11 @@ void App::RunProducer() {
   keys.reserve(kDefaultProducerBatchSize);
 
   const auto callback = [this, &count, &local_stats,
-                         &keys](const MapBlockPos &pos, int64_t mtime) -> bool {
+                         &keys](const MapBlockPos &pos) -> bool {
     count++;
     local_stats->queued_map_blocks_++;
 
-    keys.push_back(MapBlockKey(pos.MapBlockId(), mtime));
+    keys.push_back(MapBlockKey(pos.MapBlockId()));
     if (keys.size() >= kDefaultProducerBatchSize) {
       map_block_queue_.Enqueue(std::move(keys));
 

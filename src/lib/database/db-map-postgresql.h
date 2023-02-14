@@ -14,9 +14,9 @@ public:
 
   std::optional<Blob> LoadMapBlock(const MapBlockPos &pos) override;
 
-  bool ProduceMapBlocks(
-      const MapBlockPos &min, const MapBlockPos &max,
-      std::function<bool(const MapBlockPos &, int64_t)> callback) override;
+  bool
+  ProduceMapBlocks(const MapBlockPos &min, const MapBlockPos &max,
+                   std::function<bool(const MapBlockPos &)> callback) override;
 
   void DeleteMapBlocks(const std::vector<MapBlockPos> &list) override;
 

@@ -5,18 +5,8 @@ static constexpr char kSqlLoadBlock[] = R"sql(
 select data from blocks where pos = :pos
 )sql";
 
-// Normally "blocks" has no column "mtime".  "mtime" is added by the mapserver
-// mod and is useful for "tailing" the blocks table to continually find freshly
-// changed mapblocks.
 static constexpr char kSqlListBlocks[] = R"sql(
-select pos, mtime
-from blocks
-where pos between :min_pos and :max_pos
-)sql";
-
-// Fallback for if "mtime" does not exist.
-static constexpr char kSqlListBlocksNoMtime[] = R"sql(
-select pos, 0 as mtime
+select pos
 from blocks
 where pos between :min_pos and :max_pos
 )sql";
@@ -32,14 +22,7 @@ MapInterfaceSqlite3::MapInterfaceSqlite3(std::string_view connection_str)
   stmt_load_block_ = std::make_unique<SqliteStmt>(*db_.get(), kSqlLoadBlock);
   stmt_delete_block_ =
       std::make_unique<SqliteStmt>(*db_.get(), kSqlDeleteBlock);
-
-  try {
-    stmt_list_blocks_ =
-        std::make_unique<SqliteStmt>(*db_.get(), kSqlListBlocks);
-  } catch (const Sqlite3Error &err) {
-    stmt_list_blocks_ =
-        std::make_unique<SqliteStmt>(*db_.get(), kSqlListBlocksNoMtime);
-  }
+  stmt_list_blocks_ = std::make_unique<SqliteStmt>(*db_.get(), kSqlListBlocks);
 }
 
 std::optional<MapInterface::Blob>
@@ -63,21 +46,19 @@ void MapInterfaceSqlite3::DeleteMapBlocks(
 
 bool MapInterfaceSqlite3::ProduceMapBlocks(
     const MapBlockPos &min, const MapBlockPos &max,
-    std::function<bool(const MapBlockPos &, int64_t)> callback) {
+    std::function<bool(const MapBlockPos &)> callback) {
 
   stmt_list_blocks_->BindInt(1, min.MapBlockId());
   stmt_list_blocks_->BindInt(2, max.MapBlockId());
 
   while (stmt_list_blocks_->Step()) {
-    const int64_t block_id = stmt_list_blocks_->ColumnInt64(0);
-    const int64_t mtime = stmt_list_blocks_->ColumnInt64(1);
-    const MapBlockPos pos(block_id);
+    const MapBlockPos pos(stmt_list_blocks_->ColumnInt64(0));
 
     if (!pos.inside(min, max)) {
       continue;
     }
 
-    if (!callback(pos, mtime)) {
+    if (!callback(pos)) {
       return false;
     }
   }

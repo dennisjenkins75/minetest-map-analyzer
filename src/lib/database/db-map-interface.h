@@ -36,9 +36,9 @@ public:
   // Returns `true` after all map blocks are processed AND the `callback`
   // returned true for each map block.  Aborts early on database error and/or
   // if `callback` returns `false`.
-  virtual bool ProduceMapBlocks(
-      const MapBlockPos &min, const MapBlockPos &max,
-      std::function<bool(const MapBlockPos &pos, int64_t)> callback) = 0;
+  virtual bool
+  ProduceMapBlocks(const MapBlockPos &min, const MapBlockPos &max,
+                   std::function<bool(const MapBlockPos &pos)> callback) = 0;
 
   virtual void DeleteMapBlocks(const std::vector<MapBlockPos> &list) = 0;
 

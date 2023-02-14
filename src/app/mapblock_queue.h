@@ -6,38 +6,20 @@
 
 struct MapBlockKey {
   int64_t pos;
-  int64_t mtime;
 
   MapBlockKey() = delete;
-  MapBlockKey(int64_t pos_, int64_t mtime_) : pos(pos_), mtime(mtime_) {}
+  MapBlockKey(int64_t pos_) : pos(pos_) {}
 
   static MapBlockKey MakeTombstone() {
-    return MapBlockKey{std::numeric_limits<int64_t>::max(),
-                       std::numeric_limits<int64_t>::max()};
+    return MapBlockKey{std::numeric_limits<int64_t>::max()};
   }
 
-  bool operator==(const MapBlockKey &a) const {
-    return (a.pos == pos) && (a.mtime == mtime);
-  }
+  bool operator==(const MapBlockKey &a) const { return (a.pos == pos); }
 
   bool isTombstone() const {
-    return (pos == std::numeric_limits<int64_t>::max()) &&
-           (mtime == std::numeric_limits<int64_t>::max());
+    return pos == std::numeric_limits<int64_t>::max();
   }
 };
-
-// 1. Want the youngest mtime, and smallest position to sort to the "top".
-// 2. Want "tombstone" to always sort last.
-static inline bool operator<(const MapBlockKey &a, const MapBlockKey &b) {
-#if 0
-  if (a.mtime == b.mtime) {
-    return a.pos > b.pos;
-  }
-  return a.mtime > b.mtime;
-#else
-  return a.pos > b.pos;
-#endif
-}
 
 class MapBlockQueue final {
 public:
@@ -76,7 +58,7 @@ public:
     std::unique_lock<std::mutex> lock(mutex_);
     cv_.wait(lock, [this]() { return !queue_.empty(); });
 
-    MapBlockKey retval = queue_.top();
+    MapBlockKey retval = queue_.front();
 
     if (!retval.isTombstone()) {
       queue_.pop();
@@ -105,12 +87,12 @@ public:
   bool idle_wait(const std::chrono::duration<Rep, Period> &timeout) {
     std::unique_lock<std::mutex> lock(mutex_);
     return !cv_.wait_for(lock, timeout, [this]() {
-      return !queue_.empty() && queue_.top().isTombstone();
+      return !queue_.empty() && queue_.front().isTombstone();
     });
   }
 
 private:
-  std::priority_queue<MapBlockKey> queue_;
+  std::queue<MapBlockKey> queue_;
   mutable std::mutex mutex_;
   std::condition_variable cv_;
 };
