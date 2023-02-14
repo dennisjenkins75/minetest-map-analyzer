@@ -100,12 +100,12 @@ void App::RunConsumer() {
     }
 
     if (uniform || anthropocene) {
-      auto block = std::make_unique<DataWriterBlock>();
+      auto block = std::make_unique<MapBlockData>();
       block->pos = mapblock_pos;
       block->uniform = uniform;
       block->anthropocene = anthropocene;
 
-      data_writer_.EnqueueBlock(std::move(block));
+      map_block_writer_.EnqueueBlock(std::move(block));
     }
 
     BlockInfo &bi =

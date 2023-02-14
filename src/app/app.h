@@ -6,6 +6,7 @@
 #include "src/app/config.h"
 #include "src/app/data_writer.h"
 #include "src/app/mapblock_queue.h"
+#include "src/app/mapblock_writer.h"
 #include "src/app/stats.h"
 #include "src/lib/3dmatrix/3dmatrix.h"
 #include "src/lib/id_map/id_map.h"
@@ -31,8 +32,9 @@ public:
       : config_(config), node_filter_(), actor_ids_(),
         node_ids_(
             std::bind(&App::LookupNodeExtraInfo, this, std::placeholders::_1)),
-        data_writer_(config, node_ids_, actor_ids_), map_block_queue_(),
-        stats_(), start_time_(std::chrono::steady_clock::now()) {}
+        data_writer_(config, node_ids_, actor_ids_), map_block_writer_(config),
+        map_block_queue_(), stats_(),
+        start_time_(std::chrono::steady_clock::now()) {}
   ~App() {}
 
   void Run();
@@ -46,6 +48,7 @@ private:
   IdMap<NodeIdMapExtraInfo> node_ids_;
   Sparse3DMatrix<BlockInfo> block_data_;
   DataWriter data_writer_;
+  MapBlockWriter map_block_writer_;
   MapBlockQueue map_block_queue_;
   Stats stats_;
   std::chrono::time_point<std::chrono::steady_clock> start_time_;
