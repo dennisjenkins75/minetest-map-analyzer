@@ -31,11 +31,12 @@ void App::RunConsumer() {
       break;
     }
 
-    // TODO: rename `pos` to `mapblock_pos` to reduce ambiguity below.
-    const MapBlockPos pos(key.pos);
-    std::optional<MapInterface::Blob> raw_data = map->LoadMapBlock(pos);
+    const MapBlockPos mapblock_pos(key.pos);
+    std::optional<MapInterface::Blob> raw_data =
+        map->LoadMapBlock(mapblock_pos);
     if (!raw_data) {
-      spdlog::error("Failed to load mapblock {0} {1}", pos.str(), key.pos);
+      spdlog::error("Failed to load mapblock {0} {1}", mapblock_pos.str(),
+                    key.pos);
       continue;
     }
 
@@ -48,8 +49,8 @@ void App::RunConsumer() {
       // TODO: Log these failed blocks and error message to an output table.
       local_stats->bad_map_blocks_++;
       local_stats->by_version_[mb.version()]++;
-      spdlog::error("Failed to deserialize mapblock {0} {1}. {2}", pos.str(),
-                    key.pos, err.what());
+      spdlog::error("Failed to deserialize mapblock {0} {1}. {2}",
+                    mapblock_pos.str(), key.pos, err.what());
       continue;
     }
 
@@ -75,7 +76,7 @@ void App::RunConsumer() {
 
       if (minegeld || is_bones || has_inventory || (owner_id > -0)) {
         auto dwn = std::make_unique<DataWriterNode>();
-        dwn->pos = NodePos(pos, i);
+        dwn->pos = NodePos(mapblock_pos, i);
         dwn->owner_id = owner_id;
         dwn->node_id = node.param0();
         dwn->minegeld = minegeld;
@@ -100,14 +101,15 @@ void App::RunConsumer() {
 
     if (uniform || anthropocene) {
       auto block = std::make_unique<DataWriterBlock>();
-      block->pos = pos;
+      block->pos = mapblock_pos;
       block->uniform = uniform;
       block->anthropocene = anthropocene;
 
       data_writer_.EnqueueBlock(std::move(block));
     }
 
-    BlockInfo &bi = block_data_.Ref(pos.x, pos.y, pos.z);
+    BlockInfo &bi =
+        block_data_.Ref(mapblock_pos.x, mapblock_pos.y, mapblock_pos.z);
     bi.uniform = uniform;
     bi.anthropocene = anthropocene;
   }
