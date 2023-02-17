@@ -13,18 +13,6 @@
 #include "src/lib/map_reader/mapblock.h"
 #include "src/lib/name_filter/name_filter.h"
 
-struct BlockInfo {
-  BlockInfo() : uniform(0), anthropocene(false) {}
-
-  // If the mapblock is 100% the same content_id, then place that here.
-  // 0 otherwise.
-  uint16_t uniform;
-
-  // If the mapblock contains any nodes indicating that they were placed by
-  // a human player and no just mapgen.
-  uint8_t anthropocene;
-};
-
 class App {
 public:
   App() = delete;
@@ -32,8 +20,8 @@ public:
       : config_(config), node_filter_(), actor_ids_(),
         node_ids_(
             std::bind(&App::LookupNodeExtraInfo, this, std::placeholders::_1)),
-        data_writer_(config, node_ids_, actor_ids_), map_block_writer_(config),
-        map_block_queue_(), stats_(),
+        data_writer_(config, node_ids_, actor_ids_),
+        map_block_writer_(config, block_data_), map_block_queue_(), stats_(),
         start_time_(std::chrono::steady_clock::now()) {}
   ~App() {}
 
@@ -46,7 +34,7 @@ private:
   NameFilter node_filter_;
   IdMap<ActorIdMapExtraInfo> actor_ids_;
   IdMap<NodeIdMapExtraInfo> node_ids_;
-  Sparse3DMatrix<BlockInfo> block_data_;
+  Sparse3DMatrix<MapBlockData> block_data_;
   DataWriter data_writer_;
   MapBlockWriter map_block_writer_;
   MapBlockQueue map_block_queue_;

@@ -88,9 +88,6 @@ void App::RunConsumer() {
       anthropocene |= node_info.extra.anthropocene;
     }
 
-    // TODO: 'DataWriter' and 'BlockInfo' duplicate functionality.
-    // Modify DataWriter to only queue the BlockPos, and have it read from
-    // `block_info_`.
     if (!node_queue.empty()) {
       data_writer_.EnqueueNodes(std::move(node_queue));
     }
@@ -99,19 +96,15 @@ void App::RunConsumer() {
       uniform = mb.nodes()[0].param0();
     }
 
-    if (uniform || anthropocene) {
-      auto block = std::make_unique<MapBlockData>();
-      block->pos = mapblock_pos;
-      block->uniform = uniform;
-      block->anthropocene = anthropocene;
-
-      map_block_writer_.EnqueueBlock(std::move(block));
-    }
-
-    BlockInfo &bi =
+    // Must populate the sprase 3d matrix BEFORE enqueueing the block to the
+    // map_block_writer.
+    MapBlockData &data =
         block_data_.Ref(mapblock_pos.x, mapblock_pos.y, mapblock_pos.z);
-    bi.uniform = uniform;
-    bi.anthropocene = anthropocene;
+    data.pos = mapblock_pos;
+    data.uniform = uniform;
+    data.anthropocene = anthropocene;
+
+    map_block_writer_.EnqueueMapBlockPos(mapblock_pos);
   }
 
   stats_.EnqueueStatsData(std::move(local_stats));

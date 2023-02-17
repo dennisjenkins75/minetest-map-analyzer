@@ -9,6 +9,7 @@
 
 #include "src/app/actor.h"
 #include "src/app/config.h"
+#include "src/lib/3dmatrix/3dmatrix.h"
 #include "src/lib/database/db-sqlite3.h"
 #include "src/lib/id_map/id_map.h"
 #include "src/lib/map_reader/inventory.h"
@@ -30,26 +31,28 @@ struct MapBlockData {
 class MapBlockWriter {
 public:
   MapBlockWriter() = delete;
-  explicit MapBlockWriter(const Config &config);
+  MapBlockWriter(const Config &config,
+                 Sparse3DMatrix<MapBlockData> &block_data);
   ~MapBlockWriter() {}
 
-  void EnqueueBlock(std::unique_ptr<MapBlockData> block) {
+  void EnqueueMapBlockPos(const MapBlockPos &pos) {
     std::unique_lock<std::mutex> lock(block_mutex_);
-    block_queue_.push(std::move(block));
+    block_queue_.push(pos);
     block_cv_.notify_one();
   }
 
+  // Should only be called AFTER all analysis is done.
+  // Because analyzing one mapblock might update data on its neighbors.
   void FlushBlockQueue();
-
-  void MapBlockWriterThread();
 
 private:
   const Config &config_;
+  Sparse3DMatrix<MapBlockData> &block_data_;
 
   std::unique_ptr<SqliteDb> database_;
   std::unique_ptr<SqliteStmt> stmt_blocks_;
 
-  std::queue<std::unique_ptr<MapBlockData>> block_queue_;
+  std::queue<MapBlockPos> block_queue_;
   mutable std::mutex block_mutex_;
   std::condition_variable block_cv_;
 };
