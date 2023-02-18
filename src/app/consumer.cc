@@ -98,13 +98,25 @@ void App::RunConsumer() {
 
     // Must populate the sprase 3d matrix BEFORE enqueueing the block to the
     // map_block_writer.
-    MapBlockData &data =
-        block_data_.Ref(mapblock_pos.x, mapblock_pos.y, mapblock_pos.z);
+    MapBlockData &data = block_data_.Ref(mapblock_pos);
     data.pos = mapblock_pos;
     data.uniform = uniform;
     data.anthropocene = anthropocene;
 
     map_block_writer_.EnqueueMapBlockPos(mapblock_pos);
+
+    if (anthropocene) {
+      const int r = config_.preserve_radius; // alias for brevity.
+
+      // Mark adjacent blocks as "don't delete".
+      for (int z = mapblock_pos.z - r; z <= mapblock_pos.z + r; ++z) {
+        for (int y = mapblock_pos.y - r; y <= mapblock_pos.y + r; ++y) {
+          for (int x = mapblock_pos.x - r; x <= mapblock_pos.x + r; ++x) {
+            block_data_.Ref(mapblock_pos).preserve = true;
+          }
+        }
+      }
+    }
   }
 
   stats_.EnqueueStatsData(std::move(local_stats));

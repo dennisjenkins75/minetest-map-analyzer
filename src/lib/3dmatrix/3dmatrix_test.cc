@@ -9,7 +9,9 @@ using ::testing::IsEmpty;
 TEST(Sparse3DMatrix, General) {
   Sparse3DMatrix<std::string> foo;
 
-  EXPECT_THAT(foo.Ref(751, -325, -1987), IsEmpty());
-  foo.Ref(751, -325, -1987) = "hello";
-  EXPECT_THAT(foo.Ref(751, -325, -1987), Eq("hello"));
+  const MapBlockPos p1(751, -325, -1987);
+
+  EXPECT_THAT(foo.Ref(p1), IsEmpty());
+  foo.Ref(p1) = "hello";
+  EXPECT_THAT(foo.Ref(p1), Eq("hello"));
 }

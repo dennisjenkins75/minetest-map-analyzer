@@ -47,12 +47,6 @@ public:
     block_cv_.notify_one();
   }
 
-  // Call after main threaded processing is done.
-  // Makes a single pass through the `block_queue_`, updating the `preserve`
-  // bit for all adjacent blocks in `block_data_`.  Run serially to avoid
-  // massive lock contention if ran threaded.
-  void PreserveAdjacentBlocks();
-
   // Should only be called AFTER all analysis is done.
   // Because analyzing one mapblock might update data on its neighbors.
   void FlushBlockQueue();

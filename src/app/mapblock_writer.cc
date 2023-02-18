@@ -29,36 +29,6 @@ MapBlockWriter::MapBlockWriter(const Config &config,
   stmt_blocks_ = std::make_unique<SqliteStmt>(*database_.get(), kSqlWriteBlock);
 }
 
-void MapBlockWriter::PreserveAdjacentBlocks() {
-  spdlog::trace("PreserveAdjacentBlocks enter");
-
-  std::unique_lock<std::mutex> lock(block_mutex_);
-  std::unordered_set<MapBlockPos, Hash> merged;
-
-  for (auto &pos : block_queue_) {
-    const MapBlockData &block = block_data_.Ref(pos.x, pos.y, pos.z);
-
-    if (block.anthropocene) {
-      const int r = config_.preserve_radius; // alias for brevity.
-
-      // Mark adjacent blocks as "don't delete".
-      for (int z = pos.z - r; z <= pos.z + r; ++z) {
-        for (int y = pos.y - r; y <= pos.y + r; ++y) {
-          for (int x = pos.x - r; x <= pos.x + r; ++x) {
-            merged.emplace(MapBlockPos(x, y, z));
-          }
-        }
-      }
-    }
-  }
-
-  for (auto &pos : merged) {
-    block_data_.Ref(pos.x, pos.y, pos.z).preserve = true;
-  }
-
-  spdlog::trace("PreserveAdjacentBlocks exit");
-}
-
 void MapBlockWriter::FlushBlockQueue() {
   spdlog::trace("FlushBlockQueue enter");
 
@@ -69,7 +39,7 @@ void MapBlockWriter::FlushBlockQueue() {
     const MapBlockPos pos = block_queue_.front();
     block_queue_.pop_front();
 
-    const MapBlockData &block = block_data_.Ref(pos.x, pos.y, pos.z);
+    const MapBlockData &block = block_data_.Ref(pos);
 
     stmt_blocks_->BindInt(1, block.pos.MapBlockId());
     stmt_blocks_->BindInt(2, block.pos.x);
