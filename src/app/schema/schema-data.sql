@@ -46,7 +46,7 @@ create table `inventory` (
   item_string text
 );
 
--- For recording mapblocks that are 'interesting'.
+-- Contains one record for each mapblock in the original world database.
 create table `blocks` (
   -- Which mapblock.
   mapblock_id integer primary key,
@@ -60,5 +60,8 @@ create table `blocks` (
   uniform integer not null,
 
   -- Mapblock contains likely human-generated content.
-  anthropocene bool not null
+  anthropocene bool not null,
+
+  -- Mapblock should NOT be deleted.
+  preserve bool not null
 );

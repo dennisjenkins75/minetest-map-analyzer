@@ -22,6 +22,7 @@ static constexpr int OPT_OUT = 261;
 static constexpr int OPT_HELP = 262;
 static constexpr int OPT_DRIVER = 263;
 static constexpr int OPT_PATTERN = 264;
+static constexpr int OPT_RADIUS = 265;
 
 static struct option long_options[] = {
     {"help", no_argument, NULL, OPT_HELP},
@@ -32,6 +33,7 @@ static struct option long_options[] = {
     {"out", required_argument, NULL, OPT_OUT},
     {"pattern", required_argument, NULL, OPT_PATTERN},
     {"driver", required_argument, NULL, OPT_DRIVER},
+    {"radius", required_argument, NULL, OPT_RADIUS},
     {"threads", required_argument, NULL, 't'},
     {"max_load_avg", required_argument, NULL, 'l'},
     {NULL, 0, NULL, 0}};
@@ -49,7 +51,8 @@ void Usage(const char *prog) {
       << "  --driver type    - Map reader driver (sqlite or postgresql).\n"
       << "  --map   filename - Path to map.sqlite file (REQUIRED).\n"
       << "  --out   filename - Path to output sqlite file (REQUIRED).\n"
-      << "  --pattern filename - Path to node name regex list (optional).\n";
+      << "  --pattern filename - Path to node name regex list (optional).\n"
+      << "  --radius n       - Mapblock radius to preserve. See README file.\n";
 }
 
 int main(int argc, char *argv[]) {
@@ -134,6 +137,10 @@ int main(int argc, char *argv[]) {
 
       case OPT_PATTERN:
         config.pattern_filename = optarg;
+        break;
+
+      case OPT_RADIUS:
+        config.preserve_radius = strtoul(optarg, NULL, 10);
         break;
 
       default:

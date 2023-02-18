@@ -65,6 +65,7 @@ void App::RunSerially() {
     data_writer_.FlushActorIdMap();
     data_writer_.FlushNodeIdMap();
     data_writer_.FlushNodeQueue();
+    map_block_writer_.PreserveAdjacentBlocks();
     map_block_writer_.FlushBlockQueue();
     stats_.SetTombstone();
     stats_.StatsMergeThread();
@@ -103,6 +104,7 @@ void App::RunThreaded() {
   data_writer_.FlushActorIdMap();
   data_writer_.FlushNodeIdMap();
   data_writer_.FlushNodeQueue();
+  map_block_writer_.PreserveAdjacentBlocks();
   map_block_writer_.FlushBlockQueue();
 
   stats_.SetTombstone();

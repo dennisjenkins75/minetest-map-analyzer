@@ -18,14 +18,20 @@
 #include "src/lib/map_reader/pos.h"
 
 struct MapBlockData {
-  MapBlockData() : pos(), uniform(0), anthropocene(false) {}
+  MapBlockData() : pos(), uniform(0), anthropocene(false), preserve(false) {}
   MapBlockPos pos;
 
   // If the mapblock is 100% the same content_id, then place that here.
   // 0 otherwise.
   uint64_t uniform;
 
+  // Mapblock contains atleast 1 node that is highly likely to have been placed
+  // by a player (and not mapgen).
   bool anthropocene;
+
+  // At least one mapblock within `preserve_radius` is canonically preserved,
+  // so this mapblock is as well.
+  bool preserve;
 };
 
 class MapBlockWriter {
@@ -37,9 +43,15 @@ public:
 
   void EnqueueMapBlockPos(const MapBlockPos &pos) {
     std::unique_lock<std::mutex> lock(block_mutex_);
-    block_queue_.push(pos);
+    block_queue_.push_back(pos);
     block_cv_.notify_one();
   }
+
+  // Call after main threaded processing is done.
+  // Makes a single pass through the `block_queue_`, updating the `preserve`
+  // bit for all adjacent blocks in `block_data_`.  Run serially to avoid
+  // massive lock contention if ran threaded.
+  void PreserveAdjacentBlocks();
 
   // Should only be called AFTER all analysis is done.
   // Because analyzing one mapblock might update data on its neighbors.
@@ -52,7 +64,7 @@ private:
   std::unique_ptr<SqliteDb> database_;
   std::unique_ptr<SqliteStmt> stmt_blocks_;
 
-  std::queue<MapBlockPos> block_queue_;
+  std::deque<MapBlockPos> block_queue_;
   mutable std::mutex block_mutex_;
   std::condition_variable block_cv_;
 };

@@ -10,6 +10,7 @@ void DebugLogConfig(const Config &config) {
                 config.min_pos.MapBlockId());
   spdlog::debug("config.max_pos: {0} {1}", config.max_pos.str(),
                 config.max_pos.MapBlockId());
+  spdlog::debug("config.preserve_radius: {0}", config.preserve_radius);
   spdlog::debug("config.threads: {0}", config.threads);
   spdlog::debug("config.max_load_avg: {0}", config.max_load_avg);
 }

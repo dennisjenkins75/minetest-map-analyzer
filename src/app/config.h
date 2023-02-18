@@ -5,6 +5,11 @@
 #include "src/lib/database/db-map-interface.h"
 #include "src/lib/map_reader/pos.h"
 
+// Default mapblock radius to preserve adjacent anthropocene blocks.
+// The "mapblock removal" code will preserve (not delete) any mapblock within
+// this mapblock distance from any mapblock considered "anthropocene".
+static constexpr int kDefaultPreserveRadius = 5;
+
 // User config, captured from command line, shared read-only between worker
 // threads.
 
@@ -13,7 +18,8 @@ struct Config {
       : min_pos(MapBlockPos::min()), max_pos(MapBlockPos::max()),
         driver_type(MapDriverType::SQLITE), map_filename(), out_filename(),
         pattern_filename(), threads(0),
-        max_load_avg(std::thread::hardware_concurrency()) {}
+        max_load_avg(std::thread::hardware_concurrency()),
+        preserve_radius(kDefaultPreserveRadius) {}
 
   MapBlockPos min_pos;
   MapBlockPos max_pos;
@@ -44,6 +50,11 @@ struct Config {
   // max load average.  Worker threads will intentionally slow down if the
   // host's load average is above this value.
   double max_load_avg;
+
+  // Mapblock radius to preserve adjacent anthropocene blocks.
+  // The "mapblock removal" code will preserve (not delete) any mapblock within
+  // this mapblock distance from any mapblock considered "anthropocene".
+  int preserve_radius;
 };
 
 // Writes config to spdlog.
