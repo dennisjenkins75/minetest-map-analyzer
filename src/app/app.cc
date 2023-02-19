@@ -4,12 +4,18 @@
 #include <iostream>
 #include <list>
 #include <spdlog/spdlog.h>
+#include <sys/resource.h>
 #include <thread>
 #include <vector>
 
 #include "src/app/app.h"
 
 static constexpr auto kProgressInterval = std::chrono::milliseconds(100);
+static constexpr std::string_view kColorReset = "\x1b[0m";
+static constexpr std::string_view kColorLabel = "\x1b[0m"; // default
+static constexpr std::string_view kColorData = "\x1b[32m"; // green
+static constexpr std::string_view kClearEOL = "\x1b[0K";
+static constexpr std::string_view kCursorLeft = "\x1b[0G";
 
 void App::DisplayProgress() {
   // Warning.. Linux/xterm specific escape codes.
@@ -26,6 +32,11 @@ void App::DisplayProgress() {
     return;
   }
 
+  struct rusage usage;
+  if (getrusage(RUSAGE_SELF, &usage) < 0) {
+    return;
+  }
+
   const uint64_t sofar = data.good_map_blocks_ + data.bad_map_blocks_;
   const uint64_t remaining = data.queued_map_blocks_ - sofar;
   const double perc =
@@ -36,25 +47,24 @@ void App::DisplayProgress() {
   std::stringstream ss;
 
   // Return cursor to left side, same line.
-  ss << "\x1b[G";
+  ss << kCursorLeft;
 
   // Colors!
-  ss << "\x1b[32m";
-
-  ss << sofar << " of " << data.queued_map_blocks_ << "  (" << std::fixed
-     << std::setprecision(5) << perc << "%)  blocks/s: " << blocks_per_second
-     << "  eta(s): " << eta;
+  ss << kColorData << sofar << kColorLabel << " of " << kColorData
+     << data.queued_map_blocks_ << kColorLabel << "  (" << std::fixed
+     << std::setprecision(3) << kColorData << perc << kColorLabel
+     << "%)  blocks/s: " << std::setprecision(1) << kColorData
+     << blocks_per_second << kColorLabel << "  eta(s): " << kColorData << eta
+     << kColorLabel << "  rss(MiB): " << kColorData << (usage.ru_maxrss / 1024);
 
   // Reset color.
-  ss << "\x1b[0m";
-
-  // Clear to end of line.
-  ss << "\x1b[0K";
+  ss << kColorReset << kClearEOL;
 
   // Reset cursor to left (again), so that any other stdout/stderr (spdlog)
   // Will start on a freshish line.
   ss << "\r";
 
+  // Emit entire string in one atomic operation.
   std::cerr << ss.str();
 }
 
