@@ -1,4 +1,4 @@
-// Convertsion utils copied from LGPL 2.1 minetest code:
+// Conversion utils copied from LGPL 2.1 minetest code:
 // minetest/src/database/database.cpp
 
 #include <iostream>
