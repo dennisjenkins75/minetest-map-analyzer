@@ -63,6 +63,26 @@ template <typename T> struct Pos {
   }
 };
 
+struct PosHashFunc {
+  // uint64 -> uint64 hashing function.
+  // NOT cryptographically secure.
+  // https://lemire.me/blog/2018/08/15/fast-strongly-universal-64-bit-hashing-everywhere/
+  static inline uint64_t MurMur64Hash(uint64_t h) {
+    h ^= h >> 33;
+    h *= 0xff51afd7ed558ccdL;
+    h ^= h >> 33;
+    h *= 0xc4ceb9fe1a85ec53L;
+    h ^= h >> 33;
+    return h;
+  }
+
+  template <class T>
+  std::size_t __attribute__((noinline)) operator()(const Pos<T> &pos) const {
+    return MurMur64Hash(pos.x) ^ MurMur64Hash(MurMur64Hash(pos.y)) ^
+           MurMur64Hash(MurMur64Hash(MurMur64Hash(pos.z)));
+  }
+};
+
 // Mapblocks have a range of 12 bits (-2048 to +2047).
 struct MapBlockPos : public Pos<int16_t> {
   MapBlockPos() : Pos() {}

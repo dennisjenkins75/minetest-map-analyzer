@@ -1,4 +1,5 @@
 #include <spdlog/spdlog.h>
+#include <unordered_set>
 
 #include "src/app/app.h"
 #include "src/lib/database/db-map-interface.h"
@@ -7,6 +8,19 @@
 #include "src/lib/map_reader/node.h"
 #include "src/lib/map_reader/pos.h"
 #include "src/lib/map_reader/utils.h"
+
+using PreserveSet = std::unordered_set<MapBlockPos, PosHashFunc>;
+
+void UpdatePreserveSet(PreserveSet &preserve_set,
+                       const MapBlockPos &mapblock_pos, int radius) {
+  for (int z = mapblock_pos.z - radius; z <= mapblock_pos.z + radius; ++z) {
+    for (int y = mapblock_pos.y - radius; y <= mapblock_pos.y + radius; ++y) {
+      for (int x = mapblock_pos.x - radius; x <= mapblock_pos.x + radius; ++x) {
+        preserve_set.insert(MapBlockPos(x, y, z));
+      }
+    }
+  }
+}
 
 void App::RunConsumer() {
   spdlog::trace("Consumer entry");
@@ -17,6 +31,7 @@ void App::RunConsumer() {
   ThreadLocalIdMap actor_id_cache(actor_ids_);
 
   auto local_stats = std::make_unique<StatsData>();
+  PreserveSet preserve_set;
 
   while (true) {
     if ((local_stats->good_map_blocks_ + local_stats->bad_map_blocks_) >=
@@ -106,20 +121,17 @@ void App::RunConsumer() {
     map_block_writer_.EnqueueMapBlockPos(mapblock_pos);
 
     if (anthropocene) {
-      const int r = config_.preserve_radius; // alias for brevity.
-
-      // Mark adjacent blocks as "don't delete".
-      for (int z = mapblock_pos.z - r; z <= mapblock_pos.z + r; ++z) {
-        for (int y = mapblock_pos.y - r; y <= mapblock_pos.y + r; ++y) {
-          for (int x = mapblock_pos.x - r; x <= mapblock_pos.x + r; ++x) {
-            block_data_.Ref(mapblock_pos).preserve = true;
-          }
-        }
-      }
+      UpdatePreserveSet(preserve_set, mapblock_pos, config_.preserve_radius);
     }
   }
 
   stats_.EnqueueStatsData(std::move(local_stats));
+
+  spdlog::trace("Consumer flushing preserve_set of {0} items",
+                preserve_set.size());
+  for (auto &pos : preserve_set) {
+    block_data_.Ref(pos).preserve = true;
+  }
 
   spdlog::trace("Consumer exit");
 }
