@@ -63,7 +63,6 @@ template <typename T> struct Pos {
   }
 };
 
-struct PosHashFunc {
   // uint64 -> uint64 hashing function.
   // NOT cryptographically secure.
   // https://lemire.me/blog/2018/08/15/fast-strongly-universal-64-bit-hashing-everywhere/
@@ -76,8 +75,10 @@ struct PosHashFunc {
     return h;
   }
 
+
+struct PosHashFunc {
   template <class T>
-  std::size_t __attribute__((noinline)) operator()(const Pos<T> &pos) const {
+  std::size_t operator()(const Pos<T> &pos) const {
     return MurMur64Hash(pos.x) ^ MurMur64Hash(MurMur64Hash(pos.y)) ^
            MurMur64Hash(MurMur64Hash(MurMur64Hash(pos.z)));
   }
@@ -96,6 +97,12 @@ struct MapBlockPos : public Pos<int16_t> {
 
   static MapBlockPos min() { return MapBlockPos(-2048, -2048, -2048); }
   static MapBlockPos max() { return MapBlockPos(2047, 2047, 2047); }
+};
+
+struct MapBlockPosHashFunc {
+  std::size_t operator()(const MapBlockPos &pos) const {
+    return MurMur64Hash(pos.MapBlockId());
+  }
 };
 
 // Nodes have a range of 16 bits (-32768 to +32767).

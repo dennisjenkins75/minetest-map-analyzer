@@ -17,7 +17,7 @@ template <typename TData> class Sparse3DMatrix {
 
   struct Bucket {
     std::mutex mutex_;
-    std::unordered_map<MapBlockPos, TData, PosHashFunc> data_;
+    std::unordered_map<MapBlockPos, TData, MapBlockPosHashFunc> data_;
     char padding[128 - 40 - 56];
   };
 
