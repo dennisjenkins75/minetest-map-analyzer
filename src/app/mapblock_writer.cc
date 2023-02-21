@@ -41,10 +41,10 @@ void MapBlockWriter::FlushBlockQueue() {
 
     const MapBlockData &block = block_data_.Ref(pos);
 
-    stmt_blocks_->BindInt(1, block.pos.MapBlockId());
-    stmt_blocks_->BindInt(2, block.pos.x);
-    stmt_blocks_->BindInt(3, block.pos.y);
-    stmt_blocks_->BindInt(4, block.pos.z);
+    stmt_blocks_->BindInt(1, pos.MapBlockId());
+    stmt_blocks_->BindInt(2, pos.x);
+    stmt_blocks_->BindInt(3, pos.y);
+    stmt_blocks_->BindInt(4, pos.z);
     stmt_blocks_->BindInt(5, block.uniform);
     stmt_blocks_->BindBool(6, block.anthropocene);
     stmt_blocks_->BindBool(7, block.preserve);

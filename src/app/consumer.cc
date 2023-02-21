@@ -114,7 +114,6 @@ void App::RunConsumer() {
     // Must populate the sprase 3d matrix BEFORE enqueueing the block to the
     // map_block_writer.
     MapBlockData &data = block_data_.Ref(mapblock_pos);
-    data.pos = mapblock_pos;
     data.uniform = uniform;
     data.anthropocene = anthropocene;
 

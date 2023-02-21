@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <mutex>
+#include <numeric>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -16,7 +17,7 @@ template <typename TData> class Sparse3DMatrix {
   static constexpr size_t kHashBucketCount = 16007;
 
   struct Bucket {
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     std::unordered_map<MapBlockPos, TData, MapBlockPosHashFunc> data_;
     char padding[128 - 40 - 56];
   };
@@ -38,6 +39,14 @@ public:
     Bucket &bucket = buckets_.at(h % kHashBucketCount);
     std::unique_lock<std::mutex> lock(bucket.mutex_);
     return bucket.data_[pos];
+  }
+
+  size_t size() const {
+    return std::accumulate(buckets_.cbegin(), buckets_.cend(), 0,
+                           [](size_t a, const Bucket &bucket) -> size_t {
+                             std::unique_lock<std::mutex> lock(bucket.mutex_);
+                             return a + bucket.data_.size();
+                           });
   }
 
 private:
