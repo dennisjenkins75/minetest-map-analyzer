@@ -4,12 +4,13 @@
 #include <iostream>
 #include <list>
 #include <spdlog/spdlog.h>
-#include <sys/resource.h>
 #include <thread>
 #include <vector>
 
 #include "src/app/app.h"
+#include "src/lib/util/memory_stats.h"
 
+static constexpr size_t kMegabyte = 1024 * 1024;
 static constexpr auto kProgressInterval = std::chrono::milliseconds(100);
 static constexpr std::string_view kColorReset = "\x1b[0m";
 static constexpr std::string_view kColorLabel = "\x1b[0m"; // default
@@ -23,6 +24,7 @@ void App::DisplayProgress() {
   // https://www.xfree86.org/current/ctlseqs.html
   // https://en.wikipedia.org/wiki/ANSI_escape_code
 
+  const MemoryStats ms = GetMemoryStats();
   StatsData data = stats_.Get();
   const auto now = std::chrono::steady_clock::now();
   const std::chrono::duration<double> time_diff = now - start_time_;
@@ -32,17 +34,15 @@ void App::DisplayProgress() {
     return;
   }
 
-  struct rusage usage;
-  if (getrusage(RUSAGE_SELF, &usage) < 0) {
-    return;
-  }
-
   const uint64_t sofar = data.good_map_blocks_ + data.bad_map_blocks_;
   const uint64_t remaining = data.queued_map_blocks_ - sofar;
   const double perc =
       100.0 * static_cast<double>(sofar) / data.queued_map_blocks_;
   const double blocks_per_second = sofar / time_diff.count();
   const double eta = remaining / blocks_per_second;
+  const size_t matrix = block_data_.size();
+  const double bytes_per_mapblock =
+      static_cast<double>(ms.vsize) / static_cast<double>(matrix);
 
   std::stringstream ss;
 
@@ -55,7 +55,10 @@ void App::DisplayProgress() {
      << std::setprecision(3) << kColorData << perc << kColorLabel
      << "%)  blocks/s: " << std::setprecision(1) << kColorData
      << blocks_per_second << kColorLabel << "  eta(s): " << kColorData << eta
-     << kColorLabel << "  rss(MiB): " << kColorData << (usage.ru_maxrss / 1024);
+     << kColorLabel << "  vsz(MiB): " << kColorData << (ms.vsize / kMegabyte);
+
+  ss << kColorLabel << " # " << kColorData << matrix << " " << kColorLabel
+     << " b/b:" << kColorData << std::setprecision(4) << bytes_per_mapblock;
 
   // Reset color.
   ss << kColorReset << kClearEOL;
@@ -84,6 +87,8 @@ void App::RunSerially() {
 }
 
 void App::RunThreaded() {
+  size_t peak_vsize = GetMemoryStats().vsize;
+
   std::thread producer_thread(&App::RunProducer, this);
 
   std::thread stats_merge_thread(&Stats::StatsMergeThread, &stats_);
@@ -99,6 +104,7 @@ void App::RunThreaded() {
   // Ultra cheesy progress bar.
   while (map_block_queue_.idle_wait(kProgressInterval)) {
     DisplayProgress();
+    peak_vsize = std::max(peak_vsize, GetMemoryStats().vsize);
   }
 
   spdlog::trace("Main thread waiting for worker to finish.");
@@ -113,10 +119,14 @@ void App::RunThreaded() {
   data_writer_.FlushActorIdMap();
   data_writer_.FlushNodeIdMap();
   data_writer_.FlushNodeQueue();
+  peak_vsize = std::max(peak_vsize, GetMemoryStats().vsize);
   map_block_writer_.FlushBlockQueue();
 
   stats_.SetTombstone();
   stats_merge_thread.join();
+
+  peak_vsize = std::max(peak_vsize, GetMemoryStats().vsize);
+  spdlog::info("Peak RAM usage: {0} MiB", peak_vsize / kMegabyte);
 }
 
 // TODO: Read these from a text file.

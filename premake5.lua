@@ -232,6 +232,20 @@ project "schema_lib"
 
     filter {}  -- reset filter
 
+project "util_lib"
+    hide_project_makefile()
+    cpp_library()
+    files {
+        "src/lib/util/**.cc",
+    }
+    removefiles {
+        "src/lib/util/**_test.cc",
+    }
+    filter {"action:gmake or action:gmake2"}
+        enablewarnings{"all"}
+
+    filter {}  -- reset filter
+
 project "unit_tests"
     hide_project_makefile()
     kind "ConsoleApp"
@@ -250,6 +264,7 @@ project "unit_tests"
         "idmap_lib",
         "map_reader_lib",
         "name_filter_lib",
+        "util_lib",
     }
     include_gtest()
     include_pqxx()
@@ -290,6 +305,7 @@ project "map_analyzer"
         "map_reader_lib",
         "name_filter_lib",
         "schema_lib",
+        "util_lib",
     }
 
     filter { "system:linux" }
