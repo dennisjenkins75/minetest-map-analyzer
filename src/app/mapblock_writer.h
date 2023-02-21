@@ -9,6 +9,7 @@
 
 #include "src/app/actor.h"
 #include "src/app/config.h"
+#include "src/app/mapblock_data.h"
 #include "src/lib/3dmatrix/3dmatrix.h"
 #include "src/lib/database/db-sqlite3.h"
 #include "src/lib/id_map/id_map.h"
@@ -16,23 +17,6 @@
 #include "src/lib/map_reader/mapblock.h"
 #include "src/lib/map_reader/node.h"
 #include "src/lib/map_reader/pos.h"
-
-struct MapBlockData {
-  MapBlockData() : pos(), uniform(0), anthropocene(false), preserve(false) {}
-  MapBlockPos pos;
-
-  // If the mapblock is 100% the same content_id, then place that here.
-  // 0 otherwise.
-  uint64_t uniform;
-
-  // Mapblock contains atleast 1 node that is highly likely to have been placed
-  // by a player (and not mapgen).
-  bool anthropocene;
-
-  // At least one mapblock within `preserve_radius` is canonically preserved,
-  // so this mapblock is as well.
-  bool preserve;
-};
 
 class MapBlockWriter {
 public:
