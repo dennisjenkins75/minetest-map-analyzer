@@ -9,7 +9,7 @@
 #include "src/lib/map_reader/pos.h"
 #include "src/lib/map_reader/utils.h"
 
-using PreserveSet = std::unordered_set<MapBlockPos, PosHashFunc>;
+using PreserveSet = std::unordered_set<MapBlockPos, MapBlockPosHashFunc>;
 
 void UpdatePreserveSet(PreserveSet &preserve_set,
                        const MapBlockPos &mapblock_pos, int radius) {
@@ -122,15 +122,15 @@ void App::RunConsumer() {
     if (anthropocene) {
       UpdatePreserveSet(preserve_set, mapblock_pos, config_.preserve_radius);
     }
+
+    if (preserve_set.size() > config_.preserve_threshold) {
+      preserve_queue_.Enqueue(std::move(preserve_set));
+      preserve_set.clear();
+    }
   }
 
   stats_.EnqueueStatsData(std::move(local_stats));
-
-  spdlog::trace("Consumer flushing preserve_set of {0} items",
-                preserve_set.size());
-  for (auto &pos : preserve_set) {
-    block_data_.Ref(pos).preserve = true;
-  }
+  preserve_queue_.Enqueue(std::move(preserve_set));
 
   spdlog::trace("Consumer exit");
 }

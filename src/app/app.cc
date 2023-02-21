@@ -78,6 +78,9 @@ void App::RunSerially() {
     data_writer_.FlushActorIdMap();
     data_writer_.FlushNodeIdMap();
     data_writer_.FlushNodeQueue();
+    preserve_queue_.SetTombstone();
+    preserve_queue_.MergeThread();
+    ApplyPreserveFlags();
     map_block_writer_.FlushBlockQueue();
     stats_.SetTombstone();
     stats_.StatsMergeThread();
@@ -92,6 +95,8 @@ void App::RunThreaded() {
   std::thread producer_thread(&App::RunProducer, this);
 
   std::thread stats_merge_thread(&Stats::StatsMergeThread, &stats_);
+
+  std::thread preserve_thread(&PreserveQueue::MergeThread, &preserve_queue_);
 
   std::vector<std::thread> consumer_threads;
   consumer_threads.reserve(config_.threads);
@@ -114,11 +119,18 @@ void App::RunThreaded() {
     t.join();
   }
 
+  preserve_queue_.SetTombstone();
+
   spdlog::info("Flushing output data...");
   // TODO: Run the datawriter flushers in threads.
   data_writer_.FlushActorIdMap();
   data_writer_.FlushNodeIdMap();
   data_writer_.FlushNodeQueue();
+
+  peak_vsize = std::max(peak_vsize, GetMemoryStats().vsize);
+  preserve_thread.join();
+  ApplyPreserveFlags();
+
   peak_vsize = std::max(peak_vsize, GetMemoryStats().vsize);
   map_block_writer_.FlushBlockQueue();
 
@@ -137,6 +149,17 @@ void App::PreregisterContentIds() {
 
   // We use "owner 0" to mean "no owner" (not null in database).
   actor_ids_.Add(""); // 0
+}
+
+void App::ApplyPreserveFlags() {
+  PreserveQueue::MapBlockPosSet queue = preserve_queue_.SurrenderFinalSet();
+  spdlog::trace("App::ApplyPreserveFlags() enter {0} items", queue.size());
+
+  for (const MapBlockPos &pos : queue) {
+    block_data_.Ref(pos).preserve = true;
+  }
+
+  spdlog::trace("App::ApplyPreserveFlags() exit");
 }
 
 void App::Run() {

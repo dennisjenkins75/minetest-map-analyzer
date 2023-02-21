@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <numeric>
@@ -10,16 +11,18 @@
 #include "src/lib/map_reader/pos.h"
 
 template <typename TData> class Sparse3DMatrix {
-  // Target hash buckets = closets prime to (4*k + 3), where k = expected
-  // concurrency, which is 32 threads, each touching 125 adjacent blocks.
-  // (4 * 32 * 125 + 3) = 16003.
-  // https://primes.utm.edu/lists/small/100000.txt
-  static constexpr size_t kHashBucketCount = 16007;
+  // Value is prime, and determined experimentally (benchmarks).
+  static constexpr size_t kHashBucketCount = 1117;
 
   struct Bucket {
     mutable std::mutex mutex_;
     std::unordered_map<MapBlockPos, TData, MapBlockPosHashFunc> data_;
     char padding[128 - 40 - 56];
+  };
+
+  struct BucketStats {
+    double load_factor;
+    size_t size;
   };
 
 public:
@@ -41,9 +44,20 @@ public:
     return bucket.data_[pos];
   }
 
+  std::vector<BucketStats> GetStats() const {
+    std::vector<BucketStats> stats;
+    std::transform(
+        buckets_.cbegin(), buckets_.cend(), std::back_inserter(stats),
+        [](const Bucket &bucket) -> BucketStats {
+          std::unique_lock<std::mutex> lock(bucket.mutex_);
+          return BucketStats{bucket.data_.load_factor(), bucket.data_.size()};
+        });
+    return stats;
+  }
+
   size_t size() const {
     return std::accumulate(buckets_.cbegin(), buckets_.cend(), 0,
-                           [](size_t a, const Bucket &bucket) -> size_t {
+                           [](size_t a, const Bucket &bucket) {
                              std::unique_lock<std::mutex> lock(bucket.mutex_);
                              return a + bucket.data_.size();
                            });

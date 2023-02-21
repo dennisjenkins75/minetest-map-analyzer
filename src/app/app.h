@@ -7,6 +7,7 @@
 #include "src/app/data_writer.h"
 #include "src/app/mapblock_queue.h"
 #include "src/app/mapblock_writer.h"
+#include "src/app/preserve_queue.h"
 #include "src/app/stats.h"
 #include "src/lib/3dmatrix/3dmatrix.h"
 #include "src/lib/id_map/id_map.h"
@@ -20,6 +21,7 @@ public:
       : config_(config), node_filter_(), actor_ids_(),
         node_ids_(
             std::bind(&App::LookupNodeExtraInfo, this, std::placeholders::_1)),
+        block_data_(), preserve_queue_(config, block_data_),
         data_writer_(config, node_ids_, actor_ids_),
         map_block_writer_(config, block_data_), map_block_queue_(), stats_(),
         start_time_(std::chrono::steady_clock::now()) {}
@@ -35,6 +37,7 @@ private:
   IdMap<ActorIdMapExtraInfo> actor_ids_;
   IdMap<NodeIdMapExtraInfo> node_ids_;
   Sparse3DMatrix<MapBlockData> block_data_;
+  PreserveQueue preserve_queue_;
   DataWriter data_writer_;
   MapBlockWriter map_block_writer_;
   MapBlockQueue map_block_queue_;
@@ -59,6 +62,10 @@ private:
   // Preregisteres some super common nodes so that they are first in the
   // node_ids_ map.
   void PreregisterContentIds();
+
+  // Called after primary processing, to apply all of the 'preserve' flags
+  // to any map blocks that require it.
+  void ApplyPreserveFlags();
 
   // Called by `node_ids_.Add()` to look up nodes in `node_filter_` to determine
   // if they represent "special" nodes.

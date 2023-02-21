@@ -132,11 +132,11 @@ project "lib_sqlite"
     }
 
 project "3dmatrix_lib"
+    -- This is a header-only library.
+    -- Any .cc files are unit tests or manual stress testing utilities.
     hide_project_makefile()
     cpp_library()
-    files {
-        "src/lib/3dmatrix/**.cc",
-    }
+    files { }
     removefiles {
         "src/lib/3dmatrix/**_test.cc",
     }
@@ -245,6 +245,35 @@ project "util_lib"
         enablewarnings{"all"}
 
     filter {}  -- reset filter
+
+project "3dmatrix_stress_util"
+    hide_project_makefile()
+    kind "ConsoleApp"
+    language "C++"
+    set_cpp_dialect()
+    includedirs {
+        ".",
+    }
+    files {
+       "src/lib/3dmatrix/stress_util.cc",
+    }
+    systemversion "latest"
+    links {
+        "3dmatrix_lib",
+        "map_reader_lib",
+        "util_lib",
+    }
+    include_spdlog()
+
+    filter { "system:linux" }
+        links { "pthread" }
+
+    filter { "action:gmake or action:gmake2" }
+        disablewarnings { "sign-compare" }
+        enablewarnings { "all" }
+
+    filter {}  -- reset filter
+
 
 project "unit_tests"
     hide_project_makefile()
