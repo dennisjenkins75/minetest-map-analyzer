@@ -17,8 +17,7 @@ static constexpr size_t kStatsBlockFlushLimit = 256;
 // "Map / Reduce" type operation.
 struct StatsData {
   StatsData()
-      : queued_map_blocks_(0), good_map_blocks_(0),
-        bad_map_blocks_(0), by_version_{}, by_type_(65536, 0) {}
+      : queued_map_blocks_(0), good_map_blocks_(0), bad_map_blocks_(0) {}
 
   // Total count of map blocks (set by producer).
   uint64_t queued_map_blocks_;
@@ -28,13 +27,6 @@ struct StatsData {
 
   // Count of map blocks that failed to parse.
   uint64_t bad_map_blocks_;
-
-  // Count of map blocks for each version.
-  // Index is guaranteed to by a uint8_t.
-  uint64_t by_version_[256];
-
-  // Count of each node.
-  std::vector<uint64_t> by_type_;
 
   void Merge(const StatsData &a);
 };

@@ -63,14 +63,12 @@ void App::RunConsumer() {
     } catch (const SerializationError &err) {
       // TODO: Log these failed blocks and error message to an output table.
       local_stats->bad_map_blocks_++;
-      local_stats->by_version_[mb.version()]++;
       spdlog::error("Failed to deserialize mapblock {0} {1}. {2}",
                     mapblock_pos.str(), key.pos, err.what());
       continue;
     }
 
     local_stats->good_map_blocks_++;
-    local_stats->by_version_[mb.version()]++;
     std::vector<std::unique_ptr<DataWriterNode>> node_queue;
     node_queue.reserve(256);
 
@@ -83,7 +81,6 @@ void App::RunConsumer() {
           node_id_cache.Get(node.param0());
       const std::string &owner = node.get_owner();
 
-      local_stats->by_type_.at(node.param0())++;
       const uint64_t owner_id = owner.empty() ? 0 : actor_id_cache.Add(owner);
       const uint64_t minegeld = node.inventory().total_minegeld();
       const bool is_bones = (node_info.key == "bones::bones");

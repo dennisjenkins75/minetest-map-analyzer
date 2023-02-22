@@ -11,17 +11,6 @@ void StatsData::Merge(const StatsData &a) {
   queued_map_blocks_ += a.queued_map_blocks_;
   good_map_blocks_ += a.good_map_blocks_;
   bad_map_blocks_ += a.bad_map_blocks_;
-
-  for (size_t i = 0; i < 256; i++) {
-    by_version_[i] = a.by_version_[i];
-  }
-
-  if (by_type_.size() < a.by_type_.size()) {
-    by_type_.resize(a.by_type_.size(), 0);
-  }
-  for (size_t i = 0; i < a.by_type_.size(); i++) {
-    by_type_[i] += a.by_type_[i];
-  }
 }
 
 void Stats::StatsMergeThread() {
