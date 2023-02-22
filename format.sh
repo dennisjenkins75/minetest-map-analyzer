@@ -2,6 +2,7 @@
 
 MDFORMAT="${HOME}/.local/bin/mdformat"
 TYPOS="${HOME}/.cargo/bin/typos"
+PYBLACK="${HOME}/.local/bin/black"
 
 GREEN="\x1b[32m"
 CLEAR="\x1b[0m"
@@ -19,4 +20,10 @@ clang-format -i $(
 [[ -x ${TYPOS} ]] && {
   echo -e "${GREEN}typos${CLEAR}"
   ${TYPOS} ./doc ./src
+}
+
+[[ -x ${PYBLACK} ]] && {
+  echo -e "${GREEN}black${CLEAR}"
+  LC_ALL=en_US.utf8 LANG=en_US.utf8 ${PYBLACK} \
+    --line-length=80 $(find . -name "*.py" | sort | egrep -v vendor)
 }
