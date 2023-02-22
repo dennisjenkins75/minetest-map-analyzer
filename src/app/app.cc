@@ -51,14 +51,14 @@ void App::DisplayProgress() {
 
   // Colors!
   ss << kColorData << sofar << kColorLabel << " of " << kColorData
-     << data.queued_map_blocks_ << kColorLabel << "  (" << std::fixed
+     << data.queued_map_blocks_ << kColorLabel << " (" << std::fixed
      << std::setprecision(3) << kColorData << perc << kColorLabel
-     << "%)  blocks/s: " << std::setprecision(1) << kColorData
-     << blocks_per_second << kColorLabel << "  eta(s): " << kColorData << eta
-     << kColorLabel << "  vsz(MiB): " << kColorData << (ms.vsize / kMegabyte);
+     << "%) b/s: " << std::setprecision(1) << kColorData
+     << blocks_per_second << kColorLabel << " eta: " << kColorData << eta
+     << kColorLabel << " vsz: " << kColorData << (ms.vsize / kMegabyte);
 
   ss << kColorLabel << " # " << kColorData << matrix << " " << kColorLabel
-     << " b/b:" << kColorData << std::setprecision(4) << bytes_per_mapblock;
+     << " b/b:" << kColorData << std::setprecision(0) << bytes_per_mapblock;
 
   // Reset color.
   ss << kColorReset << kClearEOL;
