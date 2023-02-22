@@ -29,17 +29,9 @@ void App::RunConsumer() {
 
   ThreadLocalIdMap node_id_cache(node_ids_);
   ThreadLocalIdMap actor_id_cache(actor_ids_);
-
-  auto local_stats = std::make_unique<StatsData>();
   PreserveSet preserve_set;
 
   while (true) {
-    if ((local_stats->good_map_blocks_ + local_stats->bad_map_blocks_) >=
-        kStatsBlockFlushLimit) {
-      stats_.EnqueueStatsData(std::move(local_stats));
-      local_stats = std::make_unique<StatsData>();
-    }
-
     const MapBlockKey key = map_block_queue_.Pop();
     if (key.isTombstone()) {
       spdlog::debug("Tombstone");
@@ -52,6 +44,7 @@ void App::RunConsumer() {
     if (!raw_data) {
       spdlog::error("Failed to load mapblock {0} {1}", mapblock_pos.str(),
                     key.pos);
+      stats_.bad_map_blocks++;
       continue;
     }
 
@@ -62,13 +55,13 @@ void App::RunConsumer() {
       mb.deserialize(blob, key.pos, node_id_cache);
     } catch (const SerializationError &err) {
       // TODO: Log these failed blocks and error message to an output table.
-      local_stats->bad_map_blocks_++;
+      stats_.bad_map_blocks++;
       spdlog::error("Failed to deserialize mapblock {0} {1}. {2}",
                     mapblock_pos.str(), key.pos, err.what());
       continue;
     }
 
-    local_stats->good_map_blocks_++;
+    stats_.good_map_blocks++;
     std::vector<std::unique_ptr<DataWriterNode>> node_queue;
     node_queue.reserve(256);
 
@@ -126,7 +119,6 @@ void App::RunConsumer() {
     }
   }
 
-  stats_.EnqueueStatsData(std::move(local_stats));
   preserve_queue_.Enqueue(std::move(preserve_set));
 
   spdlog::trace("Consumer exit");

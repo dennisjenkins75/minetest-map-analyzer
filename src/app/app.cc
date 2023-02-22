@@ -25,19 +25,18 @@ void App::DisplayProgress() {
   // https://en.wikipedia.org/wiki/ANSI_escape_code
 
   const MemoryStats ms = GetMemoryStats();
-  StatsData data = stats_.Get();
   const auto now = std::chrono::steady_clock::now();
   const std::chrono::duration<double> time_diff = now - start_time_;
 
   // Avoid divide by zero.
-  if (!time_diff.count() || !data.queued_map_blocks_) {
+  if (!time_diff.count() || !stats_.queued_map_blocks) {
     return;
   }
 
-  const uint64_t sofar = data.good_map_blocks_ + data.bad_map_blocks_;
-  const uint64_t remaining = data.queued_map_blocks_ - sofar;
+  const uint64_t sofar = stats_.good_map_blocks + stats_.bad_map_blocks;
+  const uint64_t remaining = stats_.queued_map_blocks - sofar;
   const double perc =
-      100.0 * static_cast<double>(sofar) / data.queued_map_blocks_;
+      100.0 * static_cast<double>(sofar) / stats_.queued_map_blocks;
   const double blocks_per_second = sofar / time_diff.count();
   const double eta = remaining / blocks_per_second;
   const size_t matrix = block_data_.size();
@@ -51,7 +50,7 @@ void App::DisplayProgress() {
 
   // Colors!
   ss << kColorData << sofar << kColorLabel << " of " << kColorData
-     << data.queued_map_blocks_ << kColorLabel << " (" << std::fixed
+     << stats_.queued_map_blocks << kColorLabel << " (" << std::fixed
      << std::setprecision(3) << kColorData << perc << kColorLabel
      << "%) b/s: " << std::setprecision(1) << kColorData << blocks_per_second
      << kColorLabel << " eta: " << kColorData << eta << kColorLabel
@@ -82,19 +81,13 @@ void App::RunSerially() {
     preserve_queue_.MergeThread();
     ApplyPreserveFlags();
     map_block_writer_.FlushBlockQueue();
-    stats_.SetTombstone();
-    stats_.StatsMergeThread();
   } catch (const Sqlite3Error &err) {
     spdlog::error("Sqlite3Error: {0}", err.what());
   }
 }
 
 void App::RunThreaded() {
-  size_t peak_vsize = GetMemoryStats().vsize;
-
   std::thread producer_thread(&App::RunProducer, this);
-
-  std::thread stats_merge_thread(&Stats::StatsMergeThread, &stats_);
 
   std::thread preserve_thread(&PreserveQueue::MergeThread, &preserve_queue_);
 
@@ -109,7 +102,7 @@ void App::RunThreaded() {
   // Ultra cheesy progress bar.
   while (map_block_queue_.idle_wait(kProgressInterval)) {
     DisplayProgress();
-    peak_vsize = std::max(peak_vsize, GetMemoryStats().vsize);
+    stats_.SetPeakVSize(GetMemoryStats().vsize);
   }
 
   spdlog::trace("Main thread waiting for worker to finish.");
@@ -127,18 +120,15 @@ void App::RunThreaded() {
   data_writer_.FlushNodeIdMap();
   data_writer_.FlushNodeQueue();
 
-  peak_vsize = std::max(peak_vsize, GetMemoryStats().vsize);
+  stats_.SetPeakVSize(GetMemoryStats().vsize);
   preserve_thread.join();
   ApplyPreserveFlags();
 
-  peak_vsize = std::max(peak_vsize, GetMemoryStats().vsize);
+  stats_.SetPeakVSize(GetMemoryStats().vsize);
   map_block_writer_.FlushBlockQueue();
 
-  stats_.SetTombstone();
-  stats_merge_thread.join();
-
-  peak_vsize = std::max(peak_vsize, GetMemoryStats().vsize);
-  spdlog::info("Peak RAM usage: {0} MiB", peak_vsize / kMegabyte);
+  stats_.SetPeakVSize(GetMemoryStats().vsize);
+  spdlog::info("Peak RAM usage: {0} MiB", stats_.peak_vsize_bytes / kMegabyte);
 }
 
 // TODO: Read these from a text file.
@@ -181,10 +171,10 @@ void App::Run() {
   const auto t1 = std::chrono::steady_clock::now();
 
   const std::chrono::duration<double> diff = t1 - t0;
-  const double rate = stats_.QueuedBlocks() / diff.count();
+  const double rate = stats_.queued_map_blocks / diff.count();
   spdlog::info("Processed {0} blocks in {1:.2f} seconds via {2} threads for "
                "{3:.2f} blocks/sec, {4:.2f} blocks/sec/thread.",
-               stats_.QueuedBlocks(), diff.count(), config_.threads, rate,
+               stats_.queued_map_blocks, diff.count(), config_.threads, rate,
                rate / config_.threads);
   spdlog::info("Unique nodes: {0}", node_ids_.size());
   spdlog::info("Unique actors: {0}", actor_ids_.size());

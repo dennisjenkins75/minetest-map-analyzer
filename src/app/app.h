@@ -41,7 +41,7 @@ private:
   DataWriter data_writer_;
   MapBlockWriter map_block_writer_;
   MapBlockQueue map_block_queue_;
-  Stats stats_;
+  RuntimeStats stats_;
   std::chrono::time_point<std::chrono::steady_clock> start_time_;
 
   // Can be called directly (on main thread), or as a thread body.
