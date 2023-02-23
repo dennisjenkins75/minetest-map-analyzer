@@ -1,7 +1,9 @@
 #pragma once
 
-#include "src/lib/map_reader/pos.h"
 #include <cstdint>
+
+#include "src/lib/3dmatrix/3dmatrix.h"
+#include "src/lib/map_reader/pos.h"
 
 // Keep this struct as SMALL as possible.
 // Storing 100M mapblock positions in a std::unordered_map<Pos,Data>
@@ -25,3 +27,6 @@ struct MapBlockData {
 };
 
 static_assert(sizeof(MapBlockData) == 4);
+
+using MapBlockSparseMatrix =
+    Sparse3DMatrix<MapBlockPos, MapBlockData, MapBlockPosHashFunc>;

@@ -8,16 +8,20 @@
 #include <unordered_map>
 #include <vector>
 
-#include "src/lib/map_reader/pos.h"
-
-template <typename TData> class Sparse3DMatrix {
+template <typename TKey, typename TValue, class KeyHashFunc = std::hash<TKey>>
+class Sparse3DMatrix {
   // Value is prime, and determined experimentally (benchmarks).
   static constexpr size_t kHashBucketCount = 1117;
 
+  struct FakeBucket{
+    mutable std::mutex mutex_;
+    std::unordered_map<TKey, TValue, KeyHashFunc> data_;
+  };
+
   struct Bucket {
     mutable std::mutex mutex_;
-    std::unordered_map<MapBlockPos, TData, MapBlockPosHashFunc> data_;
-    char padding[128 - 40 - 56];
+    std::unordered_map<TKey, TValue, KeyHashFunc> data_;
+    char padding[128 - sizeof(FakeBucket)];
   };
 
   struct BucketStats {
@@ -29,16 +33,14 @@ public:
   Sparse3DMatrix() : buckets_(kHashBucketCount) {
     // Want each 'Bucket' in its own CPU cache line to reduce cache evictions
     // due to adjacent mutex contention.  Values valid for g++ 11.3.1
-    check_size<std::mutex, 40>();
-    check_size<std::unordered_map<int64_t, TData>, 56>();
     check_size<Bucket, 128>();
   }
   ~Sparse3DMatrix() {}
 
   // Return a reference to the indicated position.
   // Returned value is not locked.
-  TData &Ref(const MapBlockPos &pos) {
-    const size_t h = PosHashFunc()(pos);
+  TValue &Ref(const TKey &pos) {
+    const size_t h = KeyHashFunc()(pos);
     Bucket &bucket = buckets_.at(h % kHashBucketCount);
     std::unique_lock<std::mutex> lock(bucket.mutex_);
     return bucket.data_[pos];

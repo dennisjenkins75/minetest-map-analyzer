@@ -9,7 +9,6 @@
 #include "src/app/mapblock_writer.h"
 #include "src/app/preserve_queue.h"
 #include "src/app/stats.h"
-#include "src/lib/3dmatrix/3dmatrix.h"
 #include "src/lib/id_map/id_map.h"
 #include "src/lib/map_reader/mapblock.h"
 #include "src/lib/name_filter/name_filter.h"
@@ -36,7 +35,7 @@ private:
   NameFilter node_filter_;
   IdMap<ActorIdMapExtraInfo> actor_ids_;
   IdMap<NodeIdMapExtraInfo> node_ids_;
-  Sparse3DMatrix<MapBlockData> block_data_;
+  MapBlockSparseMatrix block_data_;
   PreserveQueue preserve_queue_;
   DataWriter data_writer_;
   MapBlockWriter map_block_writer_;

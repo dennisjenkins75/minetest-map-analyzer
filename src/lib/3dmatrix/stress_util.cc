@@ -13,7 +13,7 @@
 size_t kThreads = 2;
 static constexpr auto kProgressInterval = std::chrono::milliseconds(1000);
 
-using Matrix = Sparse3DMatrix<MapBlockData>;
+using Matrix = Sparse3DMatrix<MapBlockPos, MapBlockData, MapBlockPosHashFunc>;
 
 static Matrix m;
 struct rusage base_usage;

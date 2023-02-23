@@ -21,8 +21,7 @@
 class MapBlockWriter {
 public:
   MapBlockWriter() = delete;
-  MapBlockWriter(const Config &config,
-                 Sparse3DMatrix<MapBlockData> &block_data);
+  MapBlockWriter(const Config &config, MapBlockSparseMatrix &block_data);
   ~MapBlockWriter() {}
 
   void EnqueueMapBlockPos(const MapBlockPos &pos) {
@@ -37,7 +36,7 @@ public:
 
 private:
   const Config &config_;
-  Sparse3DMatrix<MapBlockData> &block_data_;
+  MapBlockSparseMatrix &block_data_;
 
   std::unique_ptr<SqliteDb> database_;
   std::unique_ptr<SqliteStmt> stmt_blocks_;

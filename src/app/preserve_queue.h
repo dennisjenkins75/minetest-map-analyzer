@@ -19,7 +19,7 @@ public:
   using MapBlockPosSet = std::unordered_set<MapBlockPos, MapBlockPosHashFunc>;
 
   PreserveQueue() = delete;
-  PreserveQueue(const Config &config, Sparse3DMatrix<MapBlockData> &block_data)
+  PreserveQueue(const Config &config, MapBlockSparseMatrix &block_data)
       : config_(config), block_data_(block_data), merge_mutex_(), cv_(),
         merge_queue_(), final_mutex_(), final_queue_() {}
   ~PreserveQueue() {}
@@ -52,7 +52,7 @@ public:
 
 private:
   const Config &config_;
-  Sparse3DMatrix<MapBlockData> &block_data_;
+  MapBlockSparseMatrix &block_data_;
 
   std::mutex merge_mutex_;
   std::condition_variable cv_;
