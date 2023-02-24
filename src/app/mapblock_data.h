@@ -28,5 +28,4 @@ struct MapBlockData {
 
 static_assert(sizeof(MapBlockData) == 4);
 
-using MapBlockHashMap =
-    HashMap<MapBlockPos, MapBlockData, MapBlockPosHashFunc>;
+using MapBlockHashMap = HashMap<MapBlockPos, MapBlockData, MapBlockPosHashFunc>;
