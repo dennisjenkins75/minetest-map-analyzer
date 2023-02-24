@@ -10,8 +10,8 @@
 #include "src/app/actor.h"
 #include "src/app/config.h"
 #include "src/app/mapblock_data.h"
-#include "src/lib/3dmatrix/3dmatrix.h"
 #include "src/lib/database/db-sqlite3.h"
+#include "src/lib/hashmap/hashmap.h"
 #include "src/lib/id_map/id_map.h"
 #include "src/lib/map_reader/inventory.h"
 #include "src/lib/map_reader/mapblock.h"
@@ -21,7 +21,7 @@
 class MapBlockWriter {
 public:
   MapBlockWriter() = delete;
-  MapBlockWriter(const Config &config, MapBlockSparseMatrix &block_data);
+  MapBlockWriter(const Config &config, MapBlockHashMap &block_data);
   ~MapBlockWriter() {}
 
   void EnqueueMapBlockPos(const MapBlockPos &pos) {
@@ -36,7 +36,7 @@ public:
 
 private:
   const Config &config_;
-  MapBlockSparseMatrix &block_data_;
+  MapBlockHashMap &block_data_;
 
   std::unique_ptr<SqliteDb> database_;
   std::unique_ptr<SqliteStmt> stmt_blocks_;

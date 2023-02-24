@@ -20,7 +20,7 @@ struct Hash {
 };
 
 MapBlockWriter::MapBlockWriter(const Config &config,
-                               MapBlockSparseMatrix &block_data)
+                               MapBlockHashMap &block_data)
     : config_(config), block_data_(block_data), stmt_blocks_(), block_queue_(),
       block_mutex_(), block_cv_() {
   VerifySchema(config_.out_filename);

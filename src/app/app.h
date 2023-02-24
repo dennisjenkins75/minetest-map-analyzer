@@ -35,7 +35,7 @@ private:
   NameFilter node_filter_;
   IdMap<ActorIdMapExtraInfo> actor_ids_;
   IdMap<NodeIdMapExtraInfo> node_ids_;
-  MapBlockSparseMatrix block_data_;
+  MapBlockHashMap block_data_;
   PreserveQueue preserve_queue_;
   DataWriter data_writer_;
   MapBlockWriter map_block_writer_;

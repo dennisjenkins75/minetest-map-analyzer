@@ -9,11 +9,11 @@
 #include <vector>
 
 template <typename TKey, typename TValue, class KeyHashFunc = std::hash<TKey>>
-class Sparse3DMatrix {
+class HashMap {
   // Value is prime, and determined experimentally (benchmarks).
   static constexpr size_t kHashBucketCount = 1117;
 
-  struct FakeBucket{
+  struct FakeBucket {
     mutable std::mutex mutex_;
     std::unordered_map<TKey, TValue, KeyHashFunc> data_;
   };
@@ -30,12 +30,12 @@ class Sparse3DMatrix {
   };
 
 public:
-  Sparse3DMatrix() : buckets_(kHashBucketCount) {
+  HashMap() : buckets_(kHashBucketCount) {
     // Want each 'Bucket' in its own CPU cache line to reduce cache evictions
     // due to adjacent mutex contention.  Values valid for g++ 11.3.1
     check_size<Bucket, 128>();
   }
-  ~Sparse3DMatrix() {}
+  ~HashMap() {}
 
   // Return a reference to the indicated position.
   // Returned value is not locked.

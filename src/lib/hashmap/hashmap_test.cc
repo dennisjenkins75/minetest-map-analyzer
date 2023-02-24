@@ -4,41 +4,41 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "src/lib/3dmatrix/3dmatrix.h"
+#include "src/lib/hashmap/hashmap.h"
 
 using ::testing::Eq;
 using ::testing::IsEmpty;
 using ::testing::SizeIs;
 
-TEST(Sparse3DMatrix, InitialIsEmpty) {
-  Sparse3DMatrix<int, std::string> foo;
+TEST(HashMap, InitialIsEmpty) {
+  HashMap<int, std::string> foo;
   EXPECT_THAT(foo, SizeIs(0));
 }
 
-TEST(Sparse3DMatrix, CreateOnAccess) {
-  Sparse3DMatrix<int, std::string> foo;
+TEST(HashMap, CreateOnAccess) {
+  HashMap<int, std::string> foo;
   ASSERT_THAT(foo, SizeIs(0));
 
   foo.Ref(1);
   EXPECT_THAT(foo, SizeIs(1));
 }
 
-TEST(Sparse3DMatrix, AutoCreateNodeIsEmpty) {
-  Sparse3DMatrix<int, std::string> foo;
+TEST(HashMap, AutoCreateNodeIsEmpty) {
+  HashMap<int, std::string> foo;
 
   foo.Ref(1);
   EXPECT_THAT(foo.Ref(1), IsEmpty());
 }
 
-TEST(Sparse3DMatrix, CanSetValue) {
-  Sparse3DMatrix<int, std::string> foo;
+TEST(HashMap, CanSetValue) {
+  HashMap<int, std::string> foo;
 
   foo.Ref(1) = "hello";
   EXPECT_THAT(foo.Ref(1), Eq("hello"));
 }
 
-TEST(Sparse3DMatrix, CanChangeValue) {
-  Sparse3DMatrix<int, std::string> foo;
+TEST(HashMap, CanChangeValue) {
+  HashMap<int, std::string> foo;
 
   foo.Ref(1) = "hello";
   EXPECT_THAT(foo.Ref(1), Eq("hello"));
@@ -47,8 +47,8 @@ TEST(Sparse3DMatrix, CanChangeValue) {
   EXPECT_THAT(foo.Ref(1), Eq("bye"));
 }
 
-TEST(Sparse3DMatrix, SizeReporting) {
-  Sparse3DMatrix<int, std::string> foo;
+TEST(HashMap, SizeReporting) {
+  HashMap<int, std::string> foo;
 
   for (int i = 0; i < 256; i++) {
     foo.Ref(i);
@@ -56,12 +56,12 @@ TEST(Sparse3DMatrix, SizeReporting) {
   EXPECT_THAT(foo, SizeIs(256));
 }
 
-TEST(Sparse3DMatrix, ThreadConcurrency) {
+TEST(HashMap, ThreadConcurrency) {
   static constexpr size_t kThreads = 8;
   static constexpr size_t kPerThreadItems = 1024 * 1024;
   // 8M items should take ~6G of RAM.
 
-  Sparse3DMatrix<int, int> matrix;
+  HashMap<int, int> matrix;
   std::vector<std::thread> threads;
 
   auto worker = [&matrix](size_t idx) -> void {

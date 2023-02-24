@@ -131,15 +131,13 @@ project "lib_sqlite"
         "-DSQLITE_OMIT_LOAD_EXTENSION",
     }
 
-project "3dmatrix_lib"
+project "hashmap_lib"
     -- This is a header-only library.
     -- Any .cc files are unit tests or manual stress testing utilities.
     hide_project_makefile()
     cpp_library()
     files { }
-    removefiles {
-        "src/lib/3dmatrix/**_test.cc",
-    }
+    removefiles { }
     filter {"action:gmake or action:gmake2"}
         enablewarnings{"all"}
 
@@ -246,7 +244,7 @@ project "util_lib"
 
     filter {}  -- reset filter
 
-project "3dmatrix_stress_util"
+project "hashmap_demo"
     hide_project_makefile()
     kind "ConsoleApp"
     language "C++"
@@ -255,11 +253,11 @@ project "3dmatrix_stress_util"
         ".",
     }
     files {
-       "src/lib/3dmatrix/stress_util.cc",
+       "src/lib/hashmap/hashmap_demo.cc",
     }
     systemversion "latest"
     links {
-        "3dmatrix_lib",
+        "hashmap_lib",
         "map_reader_lib",
         "util_lib",
     }
@@ -288,7 +286,7 @@ project "unit_tests"
     }
     systemversion "latest"
     links {
-        "3dmatrix_lib",
+        "hashmap_lib",
         "database_lib",
         "idmap_lib",
         "map_reader_lib",
@@ -328,7 +326,7 @@ project "map_analyzer"
     include_sqlite()
     systemversion "latest"
     links {
-        "3dmatrix_lib",
+        "hashmap_lib",
         "database_lib",
         "idmap_lib",
         "map_reader_lib",

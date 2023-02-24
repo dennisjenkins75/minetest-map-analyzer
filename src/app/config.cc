@@ -12,8 +12,8 @@ static constexpr int kDefaultPreserveRadius = 5;
 // common queue.
 static constexpr size_t kDefaultPreserveThreshold = 2048;
 
-// Max size of common preserve queue before flushing to global sparse 3dmatrix.
-// Locking of this matrix is expensive, hence the desire to reduce accesses
+// Max size of common preserve queue before flushing to global block hashmap.
+// Locking of this hashmap is expensive, hence the desire to reduce accesses
 // to it.
 static constexpr size_t kDefaultPreserveLimit = 32768;
 
