@@ -73,4 +73,6 @@ private:
         .anthropocene = node_filter_.Search(node_name),
     };
   }
+
+  void WriteStatsFile(const std::string filename);
 };

@@ -23,6 +23,7 @@ static constexpr int OPT_HELP = 262;
 static constexpr int OPT_DRIVER = 263;
 static constexpr int OPT_PATTERN = 264;
 static constexpr int OPT_RADIUS = 265;
+static constexpr int OPT_STATS = 266;
 
 static struct option long_options[] = {
     {"help", no_argument, NULL, OPT_HELP},
@@ -36,6 +37,7 @@ static struct option long_options[] = {
     {"radius", required_argument, NULL, OPT_RADIUS},
     {"threads", required_argument, NULL, 't'},
     {"max_load_avg", required_argument, NULL, 'l'},
+    {"stats", required_argument, NULL, OPT_STATS},
     {NULL, 0, NULL, 0}};
 
 void Usage(const char *prog) {
@@ -52,6 +54,7 @@ void Usage(const char *prog) {
       << "  --map   filename - Path to map.sqlite file (REQUIRED).\n"
       << "  --out   filename - Path to output sqlite file (REQUIRED).\n"
       << "  --pattern filename - Path to node name regex list (optional).\n"
+      << "  --stats filename - Path to append runtime stats to.\n"
       << "  --radius n       - Mapblock radius to preserve. See README file.\n";
 }
 
@@ -137,6 +140,10 @@ int main(int argc, char *argv[]) {
 
       case OPT_PATTERN:
         config.pattern_filename = optarg;
+        break;
+
+      case OPT_STATS:
+        config.stats_filename = optarg;
         break;
 
       case OPT_RADIUS:

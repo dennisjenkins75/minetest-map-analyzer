@@ -30,6 +30,10 @@ struct Config {
   // these nodes as "don't delete" during a map prube operation.
   std::string pattern_filename;
 
+  // Pathname of file to append runtime stats to.
+  // Stats are written right before main() exits.
+  std::string stats_filename;
+
   // Count of consumer worker threads.
   // If zero, then the producer and consumer will run serially on the main
   // thread (for easy gdb debugging).

@@ -114,6 +114,7 @@ void App::RunThreaded() {
 
   preserve_queue_.SetTombstone();
 
+  stats_.flush_time = std::chrono::steady_clock::now();
   spdlog::info("Flushing output data...");
   // TODO: Run the datawriter flushers in threads.
   data_writer_.FlushActorIdMap();
@@ -162,15 +163,20 @@ void App::Run() {
 
   PreregisterContentIds();
 
-  const auto t0 = std::chrono::steady_clock::now();
+  stats_.start_time = std::chrono::steady_clock::now();
   if (config_.threads) {
     RunThreaded();
   } else {
     RunSerially();
   }
-  const auto t1 = std::chrono::steady_clock::now();
+  stats_.end_time = std::chrono::steady_clock::now();
 
-  const std::chrono::duration<double> diff = t1 - t0;
+  if (!config_.stats_filename.empty()) {
+    WriteStatsFile(config_.stats_filename);
+  }
+
+  const std::chrono::duration<double> diff =
+      stats_.end_time - stats_.start_time;
   const double rate = stats_.queued_map_blocks / diff.count();
   spdlog::info("Processed {0} blocks in {1:.2f} seconds via {2} threads for "
                "{3:.2f} blocks/sec, {4:.2f} blocks/sec/thread.",
@@ -178,4 +184,22 @@ void App::Run() {
                rate / config_.threads);
   spdlog::info("Unique nodes: {0}", node_ids_.size());
   spdlog::info("Unique actors: {0}", actor_ids_.size());
+}
+
+void App::WriteStatsFile(const std::string filename) {
+  std::ofstream ofs(filename, std::ios::in | std::ios::app | std::ios::out);
+  if (ofs.is_open()) {
+    const std::chrono::duration<double> r0 =
+        stats_.flush_time - stats_.start_time;
+    const std::chrono::duration<double> r1 =
+        stats_.end_time - stats_.flush_time;
+
+    ofs << config_.threads << "," << stats_.queued_map_blocks << ","
+        << std::setprecision(2) << r0.count() << "," << std::setprecision(2)
+        << r1.count() << "," << stats_.peak_vsize_bytes << "\n";
+
+    spdlog::info("Runtime stats appended to {0}", filename);
+  } else {
+    spdlog::error("Failed to open {0} for append\n", filename);
+  }
 }

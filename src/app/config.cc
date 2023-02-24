@@ -20,7 +20,7 @@ static constexpr size_t kDefaultPreserveLimit = 32768;
 Config::Config()
     : min_pos(MapBlockPos::min()), max_pos(MapBlockPos::max()),
       driver_type(MapDriverType::SQLITE), map_filename(), out_filename(),
-      pattern_filename(), threads(0),
+      pattern_filename(), stats_filename(), threads(0),
       max_load_avg(std::thread::hardware_concurrency()),
       preserve_radius(kDefaultPreserveRadius),
       preserve_threshold(kDefaultPreserveThreshold),
@@ -30,6 +30,7 @@ void DebugLogConfig(const Config &config) {
   spdlog::debug("config.map_filename: {0}", config.map_filename);
   spdlog::debug("config.out_filename: {0}", config.out_filename);
   spdlog::debug("config.pattern_filename: {0}", config.pattern_filename);
+  spdlog::debug("config.stats_filename: {0}", config.stats_filename);
   spdlog::debug("config.min_pos: {0} {1}", config.min_pos.str(),
                 config.min_pos.MapBlockId());
   spdlog::debug("config.max_pos: {0} {1}", config.max_pos.str(),

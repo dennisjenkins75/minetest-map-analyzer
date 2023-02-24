@@ -8,8 +8,17 @@
 // this is fine.
 struct RuntimeStats {
   RuntimeStats()
-      : queued_map_blocks(0), good_map_blocks(0), bad_map_blocks(0),
-        peak_vsize_bytes(0) {}
+      : start_time(), flush_time(), end_time(), queued_map_blocks(0),
+        good_map_blocks(0), bad_map_blocks(0), peak_vsize_bytes(0) {}
+
+  // Start of the entire process.
+  std::chrono::time_point<std::chrono::steady_clock> start_time;
+
+  // When threaded processing is done, and serialized flushing begins.
+  std::chrono::time_point<std::chrono::steady_clock> flush_time;
+
+  // End of the entire process.
+  std::chrono::time_point<std::chrono::steady_clock> end_time;
 
   // Total count of map blocks (set by producer).
   std::atomic<uint64_t> queued_map_blocks;
