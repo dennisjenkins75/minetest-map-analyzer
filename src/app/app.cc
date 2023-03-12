@@ -40,8 +40,6 @@ void App::DisplayProgress() {
   const double blocks_per_second = sofar / time_diff.count();
   const double eta = remaining / blocks_per_second;
   const size_t matrix = block_data_.size();
-  const double bytes_per_mapblock =
-      static_cast<double>(ms.vsize) / static_cast<double>(matrix);
 
   std::stringstream ss;
 
@@ -56,8 +54,7 @@ void App::DisplayProgress() {
      << kColorLabel << " eta: " << kColorData << eta << kColorLabel
      << " vsz: " << kColorData << (ms.vsize / kMegabyte);
 
-  ss << kColorLabel << " # " << kColorData << matrix << " " << kColorLabel
-     << " b/b:" << kColorData << std::setprecision(0) << bytes_per_mapblock;
+  ss << kColorLabel << " # " << kColorData << matrix << " " << kColorLabel;
 
   // Reset color.
   ss << kColorReset << kClearEOL;
