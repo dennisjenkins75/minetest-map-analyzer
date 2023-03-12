@@ -101,8 +101,6 @@ void App::RunConsumer() {
       uniform = mb.nodes()[0].param0();
     }
 
-    // Must populate the sprase 3d matrix BEFORE enqueueing the block to the
-    // map_block_writer.
     MapBlockData &data = block_data_.Ref(mapblock_pos);
     data.uniform = uniform;
     data.anthropocene = anthropocene;
@@ -111,11 +109,11 @@ void App::RunConsumer() {
 
     if (anthropocene) {
       UpdatePreserveSet(preserve_set, mapblock_pos, config_.preserve_radius);
-    }
 
-    if (preserve_set.size() > config_.preserve_threshold) {
-      preserve_queue_.Enqueue(std::move(preserve_set));
-      preserve_set.clear();
+      if (preserve_set.size() > config_.preserve_threshold) {
+        preserve_queue_.Enqueue(std::move(preserve_set));
+        preserve_set.clear();
+      }
     }
   }
 
