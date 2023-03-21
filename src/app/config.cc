@@ -10,7 +10,7 @@ static constexpr int kDefaultPreserveRadius = 5;
 
 // Max size of per-thread "preserve set" of mapblocks, before flushing to
 // common queue.
-static constexpr size_t kDefaultPreserveThreshold = 2048;
+static constexpr size_t kDefaultAnthropoceneFlushThreshold = 2048;
 
 // Max size of common preserve queue before flushing to global block hashmap.
 // Locking of this hashmap is expensive, hence the desire to reduce accesses
@@ -23,7 +23,7 @@ Config::Config()
       pattern_filename(), stats_filename(), threads(0),
       max_load_avg(std::thread::hardware_concurrency()),
       preserve_radius(kDefaultPreserveRadius),
-      preserve_threshold(kDefaultPreserveThreshold),
+      anthropocene_flush_threshold(kDefaultAnthropoceneFlushThreshold),
       preserve_limit(kDefaultPreserveLimit) {}
 
 void DebugLogConfig(const Config &config) {
@@ -38,6 +38,7 @@ void DebugLogConfig(const Config &config) {
   spdlog::debug("config.preserve_radius: {0}", config.preserve_radius);
   spdlog::debug("config.threads: {0}", config.threads);
   spdlog::debug("config.max_load_avg: {0}", config.max_load_avg);
-  spdlog::debug("config.preserve_threshold: {0}", config.preserve_threshold);
+  spdlog::debug("config.anthropocene_flush_threshold: {0}",
+                config.anthropocene_flush_threshold);
   spdlog::debug("config.preserve_limit: {0}", config.preserve_limit);
 }

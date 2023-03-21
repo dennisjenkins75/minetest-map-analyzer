@@ -9,19 +9,6 @@
 #include "src/lib/map_reader/pos.h"
 #include "src/lib/map_reader/utils.h"
 
-using PreserveSet = std::unordered_set<MapBlockPos, MapBlockPosHashFunc>;
-
-void UpdatePreserveSet(PreserveSet &preserve_set,
-                       const MapBlockPos &mapblock_pos, int radius) {
-  for (int z = mapblock_pos.z - radius; z <= mapblock_pos.z + radius; ++z) {
-    for (int y = mapblock_pos.y - radius; y <= mapblock_pos.y + radius; ++y) {
-      for (int x = mapblock_pos.x - radius; x <= mapblock_pos.x + radius; ++x) {
-        preserve_set.insert(MapBlockPos(x, y, z));
-      }
-    }
-  }
-}
-
 void App::RunConsumer() {
   spdlog::trace("Consumer entry");
   std::unique_ptr<MapInterface> map =
@@ -29,7 +16,9 @@ void App::RunConsumer() {
 
   ThreadLocalIdMap node_id_cache(node_ids_);
   ThreadLocalIdMap actor_id_cache(actor_ids_);
-  PreserveSet preserve_set;
+
+  std::vector<MapBlockPos> anthropocene_list;
+  anthropocene_list.reserve(config_.anthropocene_flush_threshold);
 
   while (true) {
     const MapBlockKey key = map_block_queue_.Pop();
@@ -108,16 +97,20 @@ void App::RunConsumer() {
     map_block_writer_.EnqueueMapBlockPos(mapblock_pos);
 
     if (anthropocene) {
-      UpdatePreserveSet(preserve_set, mapblock_pos, config_.preserve_radius);
+      anthropocene_list.push_back(mapblock_pos);
 
-      if (preserve_set.size() > config_.preserve_threshold) {
-        preserve_queue_.Enqueue(std::move(preserve_set));
-        preserve_set.clear();
+      if (anthropocene_list.size() > config_.anthropocene_flush_threshold) {
+        preserve_queue_.Enqueue(std::move(anthropocene_list));
+        anthropocene_list.clear();
+        anthropocene_list.reserve(config_.anthropocene_flush_threshold);
       }
     }
   }
 
-  preserve_queue_.Enqueue(std::move(preserve_set));
+  if (!anthropocene_list.empty()) {
+    preserve_queue_.Enqueue(std::move(anthropocene_list));
+    anthropocene_list.clear();
+  }
 
   spdlog::trace("Consumer exit");
 }

@@ -48,9 +48,9 @@ struct Config {
   // this mapblock distance from any mapblock considered "anthropocene".
   int preserve_radius;
 
-  // Max count of items in each consumer thread's `preserve_set` before
+  // Max count of items in each consumer thread's `anthropocene_list` before
   // flushing those to the `preserve_queue_`.
-  size_t preserve_threshold;
+  size_t anthropocene_flush_threshold;
 
   // How large to let the `PreserveQueue.final_queue_` get, before merging that
   // into the 3d-sparse matrix.

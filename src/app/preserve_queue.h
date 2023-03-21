@@ -15,6 +15,11 @@
 
 class PreserveQueue {
 public:
+  using PositionList = std::vector<MapBlockPos>;
+
+  // Tombstone is an empty vector.
+  using AnthropoceneQueue = std::queue<PositionList>;
+
   // Tombstone is an empty set.
   using MapBlockPosSet = std::unordered_set<MapBlockPos, MapBlockPosHashFunc>;
 
@@ -24,17 +29,17 @@ public:
         merge_queue_(), final_mutex_(), final_queue_() {}
   ~PreserveQueue() {}
 
-  void Enqueue(MapBlockPosSet &&pos_set) {
-    if (!pos_set.empty()) {
+  void Enqueue(PositionList &&pos_list) {
+    if (!pos_list.empty()) {
       std::unique_lock<std::mutex> lock(merge_mutex_);
-      merge_queue_.push(std::move(pos_set));
+      merge_queue_.push(std::move(pos_list));
       cv_.notify_one();
     }
   }
 
   void SetTombstone() {
     std::unique_lock<std::mutex> lock(merge_mutex_);
-    merge_queue_.push(MapBlockPosSet());
+    merge_queue_.push(PositionList());
     cv_.notify_all();
   }
 
@@ -56,10 +61,10 @@ private:
 
   std::mutex merge_mutex_;
   std::condition_variable cv_;
-  std::queue<MapBlockPosSet> merge_queue_;
+  AnthropoceneQueue merge_queue_;
 
   std::mutex final_mutex_;
   MapBlockPosSet final_queue_;
 
-  void DoMerge(MapBlockPosSet &&positions);
+  void DoMerge(PositionList &&positions);
 };

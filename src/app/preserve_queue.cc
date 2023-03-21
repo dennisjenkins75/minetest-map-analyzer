@@ -27,15 +27,19 @@ void PreserveQueue::MergeThread() {
   spdlog::trace("PreserveQueue::MergeThread() exit");
 }
 
-void PreserveQueue::DoMerge(MapBlockPosSet &&positions) {
+void PreserveQueue::DoMerge(PositionList &&positions) {
   std::unique_lock<std::mutex> lock(final_mutex_);
-  //  size_t before = final_queue_.size();
 
   for (const MapBlockPos &pos : positions) {
-    final_queue_.insert(pos);
+    const int r = config_.preserve_radius;
+    for (int z = pos.z - r; z <= pos.z + r; ++z) {
+      for (int y = pos.y - r; y <= pos.y + r; ++y) {
+        for (int x = pos.x - r; x <= pos.x + r; ++x) {
+          final_queue_.insert(MapBlockPos(x, y, z));
+        }
+      }
+    }
   }
-
-  //  size_t after = final_queue_.size();
 
   MapBlockPosSet foo;
   if (final_queue_.size() > config_.preserve_limit) {
@@ -45,28 +49,10 @@ void PreserveQueue::DoMerge(MapBlockPosSet &&positions) {
 
   lock.unlock();
 
-#if 0
-  size_t delta = after - before;
-  float ratio = static_cast<float>(delta) / positions.size();
-
-  spdlog::debug("PreserveQueue::DoMerge size:{0} {1:.4f} {2}", positions.size(),
-                ratio, after);
-#endif
-
   if (!foo.empty()) {
-    //    spdlog::debug("PreserveQueue::DoMerge drain:{0}", foo.size());
-
     for (const MapBlockPos pos : foo) {
       block_data_.Ref(pos).preserve = true;
     }
     foo.clear();
-
-#if 0
-    const auto stats = block_data_.GetStats();
-    for (size_t i = 0; i < std::min(size_t(10), stats.size()); i++) {
-      spdlog::debug("3dSparseMatrix Stats: {0} {1} {2}", i, stats[i].size,
-                    stats[i].load_factor);
-    }
-#endif
   }
 }
