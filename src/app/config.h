@@ -48,6 +48,11 @@ struct Config {
   // this mapblock distance from any mapblock considered "anthropocene".
   int preserve_radius;
 
+  // Count of MapBlockPos the producer accumulates before locking the common
+  // map_block_queue_ to insert them.  Larger values should be make the
+  // system more efficient.
+  size_t producer_batch_size;
+
   // Max count of items in each consumer thread's `anthropocene_list` before
   // flushing those to the `preserve_queue_`.
   size_t anthropocene_flush_threshold;
