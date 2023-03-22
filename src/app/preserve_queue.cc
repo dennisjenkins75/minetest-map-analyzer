@@ -40,19 +40,4 @@ void PreserveQueue::DoMerge(PositionList &&positions) {
       }
     }
   }
-
-  MapBlockPosSet foo;
-  if (final_queue_.size() > config_.preserve_limit) {
-    foo = std::move(final_queue_);
-    final_queue_.clear();
-  }
-
-  lock.unlock();
-
-  if (!foo.empty()) {
-    for (const MapBlockPos pos : foo) {
-      block_data_.Ref(pos).preserve = true;
-    }
-    foo.clear();
-  }
 }

@@ -20,7 +20,7 @@ public:
       : config_(config), node_filter_(), actor_ids_(),
         node_ids_(
             std::bind(&App::LookupNodeExtraInfo, this, std::placeholders::_1)),
-        block_data_(), preserve_queue_(config, block_data_),
+        block_data_(), preserve_queue_(config),
         data_writer_(config, node_ids_, actor_ids_),
         map_block_writer_(config, block_data_), map_block_queue_(), stats_(),
         start_time_(std::chrono::steady_clock::now()) {}

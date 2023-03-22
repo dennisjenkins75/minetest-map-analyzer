@@ -109,6 +109,7 @@ void App::RunThreaded() {
     t.join();
   }
 
+  spdlog::info("preserve_queue_.SetTombstone()");
   preserve_queue_.SetTombstone();
 
   stats_.flush_time = std::chrono::steady_clock::now();
@@ -119,9 +120,11 @@ void App::RunThreaded() {
   data_writer_.FlushNodeQueue();
 
   stats_.SetPeakVSize(GetMemoryStats().vsize);
+  spdlog::info("preserve_thread.join()");
   preserve_thread.join();
   ApplyPreserveFlags();
 
+  spdlog::info("map_block_writer_.FlushBlockQueue()");
   stats_.SetPeakVSize(GetMemoryStats().vsize);
   map_block_writer_.FlushBlockQueue();
 
@@ -143,6 +146,7 @@ void App::ApplyPreserveFlags() {
   PreserveQueue::MapBlockPosSet queue = preserve_queue_.SurrenderFinalSet();
   spdlog::trace("App::ApplyPreserveFlags() enter {0} items", queue.size());
 
+  spdlog::info("PreserveQueue final set: {0}", queue.size());
   for (const MapBlockPos &pos : queue) {
     block_data_.Ref(pos).preserve = true;
   }

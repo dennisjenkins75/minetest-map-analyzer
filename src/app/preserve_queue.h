@@ -9,7 +9,6 @@
 #include <unordered_set>
 
 #include "src/app/config.h"
-#include "src/app/mapblock_data.h"
 #include "src/lib/hashmap/hashmap.h"
 #include "src/lib/map_reader/pos.h"
 
@@ -24,9 +23,9 @@ public:
   using MapBlockPosSet = std::unordered_set<MapBlockPos, MapBlockPosHashFunc>;
 
   PreserveQueue() = delete;
-  PreserveQueue(const Config &config, MapBlockHashMap &block_data)
-      : config_(config), block_data_(block_data), merge_mutex_(), cv_(),
-        merge_queue_(), final_mutex_(), final_queue_() {}
+  PreserveQueue(const Config &config)
+      : config_(config), merge_mutex_(), cv_(), merge_queue_(), final_mutex_(),
+        final_queue_() {}
   ~PreserveQueue() {}
 
   void Enqueue(PositionList &&pos_list) {
@@ -57,7 +56,6 @@ public:
 
 private:
   const Config &config_;
-  MapBlockHashMap &block_data_;
 
   std::mutex merge_mutex_;
   std::condition_variable cv_;
