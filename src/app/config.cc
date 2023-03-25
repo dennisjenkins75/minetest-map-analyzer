@@ -29,7 +29,7 @@ Config::Config()
       preserve_radius(kDefaultPreserveRadius),
       producer_batch_size(kDefaultProducerBatchSize),
       anthropocene_flush_threshold(kDefaultAnthropoceneFlushThreshold),
-      preserve_limit(kDefaultPreserveLimit) {}
+      preserve_limit(kDefaultPreserveLimit), track_minegeld(false) {}
 
 void DebugLogConfig(const Config &config) {
   spdlog::debug("config.map_filename: {0}", config.map_filename);
@@ -47,4 +47,5 @@ void DebugLogConfig(const Config &config) {
   spdlog::debug("config.anthropocene_flush_threshold: {0}",
                 config.anthropocene_flush_threshold);
   spdlog::debug("config.preserve_limit: {0}", config.preserve_limit);
+  spdlog::debug("config.track_minegeld: {0}", config.track_minegeld);
 }

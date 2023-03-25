@@ -24,6 +24,7 @@ static constexpr int OPT_DRIVER = 263;
 static constexpr int OPT_PATTERN = 264;
 static constexpr int OPT_RADIUS = 265;
 static constexpr int OPT_STATS = 266;
+static constexpr int OPT_MINEGELD = 267;
 
 static struct option long_options[] = {
     {"help", no_argument, NULL, OPT_HELP},
@@ -38,6 +39,7 @@ static struct option long_options[] = {
     {"threads", required_argument, NULL, 't'},
     {"max_load_avg", required_argument, NULL, 'l'},
     {"stats", required_argument, NULL, OPT_STATS},
+    {"minegeld", no_argument, NULL, OPT_MINEGELD},
     {NULL, 0, NULL, 0}};
 
 void Usage(const char *prog) {
@@ -55,7 +57,9 @@ void Usage(const char *prog) {
       << "  --out   filename - Path to output sqlite file (REQUIRED).\n"
       << "  --pattern filename - Path to node name regex list (optional).\n"
       << "  --stats filename - Path to append runtime stats to.\n"
-      << "  --radius n       - Mapblock radius to preserve. See README file.\n";
+      << "  --radius n       - Mapblock radius to preserve. See README file.\n"
+      << "  --minegeld       - Track per-node minegeld amounts.\n"
+      << "";
 }
 
 int main(int argc, char *argv[]) {
@@ -148,6 +152,10 @@ int main(int argc, char *argv[]) {
 
       case OPT_RADIUS:
         config.preserve_radius = strtoul(optarg, NULL, 10);
+        break;
+
+      case OPT_MINEGELD:
+        config.track_minegeld = true;
         break;
 
       default:

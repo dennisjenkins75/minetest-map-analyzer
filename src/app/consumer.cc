@@ -64,7 +64,8 @@ void App::RunConsumer() {
       const std::string &owner = node.get_owner();
 
       const uint64_t owner_id = owner.empty() ? 0 : actor_id_cache.Add(owner);
-      const uint64_t minegeld = node.inventory().total_minegeld();
+      const uint64_t minegeld =
+          config_.track_minegeld ? node.inventory().total_minegeld() : 0;
       const bool is_bones = (node_info.key == "bones::bones");
       const bool has_inventory = !node.inventory().empty();
 

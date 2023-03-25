@@ -60,6 +60,10 @@ struct Config {
   // How large to let the `PreserveQueue.final_queue_` get, before merging that
   // into the 3d-sparse matrix.
   size_t preserve_limit;
+
+  // If true, track how much "minegeld" (currency) is in each node's metadata.
+  // This is expensive (~17% of total CPU usage), so only enable it if needed.
+  bool track_minegeld;
 };
 
 // Writes config to spdlog.
