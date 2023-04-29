@@ -196,8 +196,9 @@ void App::WriteStatsFile(const std::string filename) {
         stats_.end_time - stats_.flush_time;
 
     ofs << config_.threads << "," << stats_.queued_map_blocks << ","
-        << std::setprecision(2) << r0.count() << "," << std::setprecision(2)
-        << r1.count() << "," << stats_.peak_vsize_bytes << "\n";
+        << std::fixed << std::setprecision(2) << r0.count() << ","
+        << std::setprecision(2) << r1.count() << "," << stats_.peak_vsize_bytes
+        << "\n";
 
     spdlog::info("Runtime stats appended to {0}", filename);
   } else {

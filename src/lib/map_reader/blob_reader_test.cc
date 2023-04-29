@@ -14,9 +14,9 @@ using ::testing::StrEq;
 
 TEST(BlobReader, General) {
   const std::vector<uint8_t> input = {
-      0x3a, 0x2b, // u16 (0x3a2b)
-      0xff,       // u8 (0xff)
-      0x7f,       // u8 (0x7f)
+      0x3a, 0x2b,             // u16 (0x3a2b)
+      0xff,                   // u8 (0xff)
+      0x7f,                   // u8 (0x7f)
 
       0xde, 0xad, 0xbe, 0xef, // u32 (0xdeadbeef)
       0x05,                   // u8 (string len = 5)

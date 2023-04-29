@@ -2,6 +2,16 @@
 
 C++ library and tool for extracting data from minetest maps.
 
+This tool has two main uses:
+
+1. Finding "interesting" nodes (like chests with way more minegeld than is
+   practical, mesecons player killers, etc...)
+1. Generating a list of "puragble" mapblocks, so that you can remove them from
+   your map database, to make it smaller.
+
+This tool can read from `sqlite` and `postgresl` database, mapblock format
+versions 28 and 29.
+
 ## Building
 
 There are two main ways to compile the binaries for this project:
@@ -42,8 +52,11 @@ $ ./bin/Release/map_analyzer \
   --map ./map.sqlite \
   --out ./output.sqlite \
   --pattern user-placed-nodes.txt \
-  -t 28 \
-  -l 20
+  --threads 8
 
+# Run some reports
 $ sqlite3 -column -header output.sqlite < reports/minegeld-by-player.sql
+$ sqlite3 -column -header output.sqlite < reports/purgable-by-strata.sql
+```
+
 ```
