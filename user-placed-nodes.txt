@@ -102,7 +102,38 @@ spacecannon:.*
 stairs:.*
 steles:.*
 street_signs:.*
-technic:.*
+#technic:.*
+technic:.*concrete.*
+technic:insulator_clip.*
+technic:micro_.*
+technic:panel_.*
+technic:slab_.*
+technic:slope_.*
+technic:stair_.*
+technic:.*_cnc_.*
+technic:.*_chest.*
+technic:cnc.*
+technic:admin_anchor
+technic:chernobylite_block
+technic:coal_alloy_furnace.*
+technic:constructor_.*
+technic:corium_.*
+technic:forcefield.*
+technic:geothermal.*
+technic:[hlm]v_.*
+technic:hydro_turbine.*
+technic:injector
+technic:machine_casing
+technic:music_player
+technic:power_monitor
+technic:quarry
+technic:solar_panel
+technic:supply_converter
+technic:switching_station
+technic:tool_workshop
+technic:uranium.*_block
+technic:water_mill.*
+# I'm too lazy to put in lots of technic blocks.
 telemosaic:.*
 travelnet:.*
 vacuum:airpump
@@ -139,6 +170,7 @@ xp_redo:.*
 # redwood:.*
 # redwood:redwood_trunk
 # rhotator:cube
+# technic:.*   (due to mapgen stuff)
 # tsm_pyramids:.*
 # vacuum:vacuum
 # vines:.*
