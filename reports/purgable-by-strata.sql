@@ -4,6 +4,6 @@ select
   min(mapblock_y) as min_y,
   max(mapblock_y) as max_y
 from blocks
-where not preserve and not uniform and mapblock_y > 1125
+where not preserve and not uniform
 group by 2
 order by 2 desc;
