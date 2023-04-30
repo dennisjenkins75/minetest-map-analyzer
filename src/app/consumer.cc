@@ -69,7 +69,8 @@ void App::RunConsumer() {
       const bool is_bones = (node_info.key == "bones::bones");
       const bool has_inventory = !node.inventory().empty();
 
-      if (minegeld || is_bones || has_inventory || (owner_id > -0)) {
+      if (minegeld || is_bones || has_inventory || (owner_id > -0) ||
+          node_info.extra.anthropocene) {
         auto dwn = std::make_unique<DataWriterNode>();
         dwn->pos = NodePos(mapblock_pos, i);
         dwn->owner_id = owner_id;
