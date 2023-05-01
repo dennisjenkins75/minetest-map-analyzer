@@ -18,20 +18,43 @@ void NameFilter::Load(std::istream &ifs) {
       line = line.substr(0, end + 1);
     }
 
+    if (line.empty()) {
+      continue;
+    }
+
     Add(line);
   }
 }
 
 void NameFilter::Add(const std::string &pattern) {
-  patterns_.push_back(std::regex(pattern));
+  if (pattern.at(0) == '!') {
+    negative_.push_back(std::regex(pattern.data() + 1));
+  } else {
+    positive_.push_back(std::regex(pattern));
+  }
 }
 
 bool NameFilter::Search(const std::string &str) const {
-  for (const auto &p : patterns_) {
+  bool found = false;
+
+  for (const auto &p : positive_) {
     std::smatch sm;
     if (std::regex_match(str, sm, p, std::regex_constants::match_default)) {
-      return true;
+      found = true;
+      break;
     }
   }
-  return false;
+
+  if (!found) {
+    return false;
+  }
+
+  for (const auto &p : negative_) {
+    std::smatch sm;
+    if (std::regex_match(str, sm, p, std::regex_constants::match_default)) {
+      return false;
+    }
+  }
+
+  return true;
 }

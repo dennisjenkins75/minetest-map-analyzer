@@ -21,6 +21,16 @@ TEST(NameFilter, General) {
   EXPECT_THAT(nf.Search("home_decor:anything"), IsTrue());
 }
 
+TEST(NameFilter, Exceptions) {
+  NameFilter nf;
+  nf.Add("technic:.*");
+  nf.Add("!technic:mineral.*");
+
+  EXPECT_THAT(nf.Search("default:stone"), IsFalse());
+  EXPECT_THAT(nf.Search("technic:foo"), IsTrue());
+  EXPECT_THAT(nf.Search("technic:mineral_lead"), IsFalse());
+}
+
 TEST(NameFilter, FromStream) {
   std::stringstream ss;
   ss << R"(

@@ -71,6 +71,10 @@ locator:.*
 lrfurn:.*
 mesecons.*:.*
 moreblocks:.*
+!moreblocks:stair_cobble
+!moreblocks:stair_desert_cobble
+!moreblocks:stair_desert_sandstone
+!moreblocks:stair_sandstone
 more_chests:.*
 morelights:.*
 morelights_.*:.*
